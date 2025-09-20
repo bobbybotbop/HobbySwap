@@ -1,24 +1,27 @@
 // Config file
+import dotenv from "dotenv";
 dotenv.config();
-const PORT = process.env.PORT || 3000;
 
-import express, { Application } from "express";
+// config vars
+const PORT = process.env.PORT || 3000;
+const MONGO_URI = process.env.MONGO_URI!;
+
+// import more dependecies
+import express, { Application, Request, Response } from "express";
 import mongoose from "mongoose";
 import userRoute from "./routes/index";
-import dotenv from "dotenv";
 
-
+// set up app
 const app: Application = express();
 
 // Middleware to parse JSON
 app.use(express.json());
 
 // Mount routes
-app.use("./api/users", userRoute);
+app.use("/api/users", userRoute);
 
-console.log("Hello")
-
-mongoose.connect(process.env.MONGO_URI!)
+mongoose
+  .connect(MONGO_URI)
   .then(() => {
     console.log("Connected to Database");
     app.listen(PORT, () => {
@@ -49,7 +52,6 @@ app.use(
 );
 
 // 404 handler
-app.use("*", (req, res) => {
+app.use("/", (req: Request, res: Response) => {
   res.status(404).json({ error: "Route not found" });
 });
-
