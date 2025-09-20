@@ -1,17 +1,37 @@
-import { GoogleGenAI } from "@google/genai";
+import 'dotenv/config';
+import axios from 'axios';
 
-// The client gets the API key from the environment variable `GEMINI_API_KEY`.
-const ai = new GoogleGenAI({});
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
-async function main() {
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: "Explain how AI works in a few words",
-  });
-  console.log(response.text);
+async function normalizeHobbies(rawHobbies) {
+  const prompt = `
+  You are a classification engine. 
+  Input: a list of hobbies (free text).
+  Output: JSON array of standardized short tags for each hobby, 
+  and 3 related hobbies for each.
+
+  Hobbies: ${JSON.stringify(rawHobbies)}
+  `;
+
+  const response = await axios.post(
+    'https://openrouter.ai/api/v1/chat/completions',
+    {
+      model: 'google/gemini-1.5-pro', // or whichever Gemini model you pick
+      messages: [{ role: 'user', content: prompt }]
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+
+  // The text the model generated
+  const content = response.data.choices[0].message.content;
+  // It should be JSON per your prompt, so parse:
+  return JSON.parse(content);
 }
-
-main();
 
 /** Takes in json file of user's desired hobbies and outputs people who do those hobbies */
 /** 
