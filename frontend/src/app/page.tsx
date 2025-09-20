@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,6 +21,8 @@ import {
   Tag,
   Plus,
   X,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { SmileSquare, Star, CogFour, Send, Inbox } from "@mynaui/icons-react";
 import ProfileCard from "@/components/ProfileCard";
@@ -29,74 +31,95 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const profilesData = [
   {
-    name: "Olivia",
-    location: "New York",
+    name: "Marcus",
+    location: "West",
     image:
-      "https://plus.unsplash.com/premium_photo-1682096181675-12f8293cd31e?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    hobbiesKnown: ["Photography", "Cooking", "Yoga"],
-    hobbiesWantToLearn: ["Guitar", "Pottery", "Rock Climbing"],
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
+    hobbiesKnown: ["Basketball", "Coding", "Gaming"],
+    hobbiesWantToLearn: ["Photography", "Cooking", "Guitar"],
+    bio: "Passionate about sports and technology! Love playing basketball and coding in my free time. Always looking to learn new skills and meet interesting people.",
+    instagram: "https://instagram.com/marcus_basketball",
   },
   {
-    name: "Natalia",
-    location: "Kiev",
-    image:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Painting", "Dancing", "Languages"],
-    hobbiesWantToLearn: ["Piano", "Gardening", "Chess"],
-  },
-  {
-    name: "Ava",
-    location: "London",
+    name: "Sophia",
+    location: "North",
     image:
       "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Writing", "Running", "Reading"],
-    hobbiesWantToLearn: ["Sewing", "Meditation", "Calligraphy"],
+    hobbiesKnown: ["Yoga", "Reading", "Painting"],
+    hobbiesWantToLearn: ["Rock Climbing", "Piano", "Languages"],
+    bio: "Art enthusiast and wellness advocate. I find peace in yoga and creativity in painting. Excited to explore new adventures and connect with fellow artists!",
+    instagram: "https://instagram.com/sophia_art",
   },
   {
-    name: "Emilia",
-    location: "London",
-    image:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Swimming", "Baking", "Knitting"],
-    hobbiesWantToLearn: ["Violin", "Woodworking", "Astronomy"],
-  },
-  {
-    name: "Elizabeth",
-    location: "Hamburg",
-    image:
-      "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Cycling", "Drawing", "Hiking"],
-    hobbiesWantToLearn: ["Coding", "Martial Arts", "Origami"],
-  },
-  {
-    name: "Camila",
-    location: "Munich",
+    name: "Alex",
+    location: "Central",
     image:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Tennis", "Singing", "Scrapbooking"],
-    hobbiesWantToLearn: ["Surfing", "Jewelry Making", "Archery"],
+    hobbiesKnown: ["Swimming", "Chess", "Writing"],
+    hobbiesWantToLearn: ["Dancing", "Woodworking", "Astronomy"],
+    bio: "Strategic thinker who loves both mental and physical challenges. Swimming keeps me fit while chess sharpens my mind. Always eager to learn something new!",
+    instagram: "https://instagram.com/alex_swimmer",
   },
   {
-    name: "Layla",
-    location: "Krakow",
+    name: "Maya",
+    location: "Off Campus",
+    image:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=400&fit=crop",
+    hobbiesKnown: ["Running", "Baking", "Gardening"],
+    hobbiesWantToLearn: ["Violin", "Pottery", "Meditation"],
+    bio: "Nature lover and kitchen enthusiast! I run to stay active, bake to spread joy, and garden to connect with nature. Looking forward to exploring music and mindfulness.",
+    instagram: "https://instagram.com/maya_gardens",
+  },
+  {
+    name: "Jordan",
+    location: "West",
+    image:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=400&fit=crop",
+    hobbiesKnown: ["Tennis", "Drawing", "Travel"],
+    hobbiesWantToLearn: ["Skiing", "Digital Art", "Calligraphy"],
+    bio: "Adventure seeker with a creative soul. Tennis keeps me competitive, drawing lets me express myself, and travel opens my mind to new cultures and experiences.",
+    instagram: "https://instagram.com/jordan_travels",
+  },
+  {
+    name: "Zoe",
+    location: "North",
+    image:
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=400&fit=crop",
+    hobbiesKnown: ["Cycling", "Singing", "Crafts"],
+    hobbiesWantToLearn: ["Surfing", "Jewelry Making", "Mixology"],
+    bio: "Creative spirit who loves to make things with my hands. Cycling gives me freedom, singing brings me joy, and crafts let me create beautiful things.",
+    instagram: "https://instagram.com/zoe_creates",
+  },
+  {
+    name: "Ryan",
+    location: "Central",
+    image:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop",
+    hobbiesKnown: ["Volleyball", "Photography", "Hiking"],
+    hobbiesWantToLearn: ["Archery", "Martial Arts", "Origami"],
+    bio: "Outdoor enthusiast and team player! Volleyball keeps me social, photography captures life's moments, and hiking connects me with nature's beauty.",
+    instagram: "https://instagram.com/ryan_outdoors",
+  },
+  {
+    name: "Luna",
+    location: "Off Campus",
     image:
       "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Volleyball", "Crafts", "Travel"],
-    hobbiesWantToLearn: ["Skiing", "Digital Art", "Mixology"],
-  },
-  {
-    name: "Isabella",
-    location: "Oslo",
-    image:
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Skiing", "Photography", "Cooking"],
-    hobbiesWantToLearn: ["Ice Skating", "Pottery", "Languages"],
+    hobbiesKnown: ["Knitting", "Cooking", "Ice Skating"],
+    hobbiesWantToLearn: ["Sewing", "Languages", "Rock Climbing"],
+    bio: "Cozy homebody with a love for handmade things. Knitting relaxes me, cooking brings people together, and ice skating makes me feel free and graceful.",
+    instagram: "https://instagram.com/luna_cozy",
   },
 ];
 
 // Generate profiles with IDs based on index
 const profiles: Profile[] = profilesData.map((profile, index) => ({
   id: index + 1,
+  netID: `user${index + 1}`,
+  email: `${profile.name.toLowerCase().replace(" ", ".")}@example.com`,
+  socialMedia: {
+    instagram: profile.instagram,
+  },
   ...profile,
 }));
 
@@ -109,7 +132,10 @@ export default function Home() {
   const [newHobbyWantToLearn, setNewHobbyWantToLearn] = useState("");
   const [showAddHobbyKnown, setShowAddHobbyKnown] = useState(false);
   const [showAddHobbyWantToLearn, setShowAddHobbyWantToLearn] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { currentUser, updateCurrentUser } = useCurrentUser();
+  const [profileLocation, setProfileLocation] = useState(currentUser.location);
 
   const handleAddHobbyKnown = () => {
     if (newHobbyKnown.trim()) {
@@ -132,6 +158,52 @@ export default function Home() {
       setNewHobbyWantToLearn("");
       setShowAddHobbyWantToLearn(false);
     }
+  };
+
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // Create a preview URL for immediate display
+      const imageUrl = URL.createObjectURL(file);
+
+      // Update the user profile with the new image
+      updateCurrentUser({ image: imageUrl });
+
+      // In a real app, you would upload the file to a server here
+      // For now, we'll simulate a brief delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploading(false);
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -437,9 +509,38 @@ export default function Home() {
                 <div className="space-y-8">
                   {/* Profile Preview Section */}
                   <div className="bg-gray-50 rounded-lg p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                      Profile Preview
-                    </h2>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl font-semibold text-gray-900">
+                        Profile Preview
+                      </h2>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-blue-500 text-blue-500 hover:bg-blue-50 disabled:opacity-50"
+                        onClick={handleUploadClick}
+                        disabled={isUploading}
+                      >
+                        {isUploading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload New Photo
+                          </>
+                        )}
+                      </Button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        aria-label="Upload profile photo"
+                      />
+                    </div>
                     <div className="flex flex-col items-center space-y-4">
                       <div className="w-full max-w-sm">
                         <ProfileCard profile={currentUser} />
@@ -452,18 +553,6 @@ export default function Home() {
                         <p className="text-xs text-gray-500">
                           This is how your profile will appear to other users.
                         </p>
-                      </div>
-
-                      <div className="flex space-x-3">
-                        <Button
-                          variant="outline"
-                          className="border-blue-500 text-blue-500 hover:bg-blue-50"
-                        >
-                          Upload New Photo
-                        </Button>
-                        <Button className="bg-blue-500 hover:bg-blue-600">
-                          Save Changes
-                        </Button>
                       </div>
                     </div>
                   </div>
@@ -497,58 +586,6 @@ export default function Home() {
                           value={currentUser.email}
                           onChange={(e) =>
                             updateCurrentUser({ email: e.target.value })
-                          }
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-
-                      {/* Mobile Number */}
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <div className="flex">
-                          <select
-                            className="pl-8 pr-3 py-3 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                            aria-label="Country code"
-                          >
-                            <option value="1">+1</option>
-                            <option value="966">+966</option>
-                            <option value="44">+44</option>
-                          </select>
-                          <input
-                            type="tel"
-                            placeholder="Mobile Number"
-                            value={currentUser.phone}
-                            onChange={(e) =>
-                              updateCurrentUser({ phone: e.target.value })
-                            }
-                            className="flex-1 pr-4 py-3 border border-gray-300 border-l-0 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Role */}
-                      <div className="relative">
-                        <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Role"
-                          value={currentUser.role}
-                          onChange={(e) =>
-                            updateCurrentUser({ role: e.target.value })
-                          }
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-
-                      {/* Location */}
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Location"
-                          value={currentUser.location}
-                          onChange={(e) =>
-                            updateCurrentUser({ location: e.target.value })
                           }
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
@@ -701,6 +738,53 @@ export default function Home() {
                     )}
                   </div>
 
+                  {/* Location Section */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                      Location
+                    </h2>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full flex items-center justify-between pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <span className="ml-7">
+                              {profileLocation || "Select Location"}
+                            </span>
+                            <ChevronDown className="ml-2 h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-full">
+                          <DropdownMenuLabel>Location</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuRadioGroup
+                            value={profileLocation}
+                            onValueChange={(value) => {
+                              setProfileLocation(value);
+                              updateCurrentUser({ location: value });
+                            }}
+                          >
+                            <DropdownMenuRadioItem value="North">
+                              North
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="West">
+                              West
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Central">
+                              Central
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="Off Campus">
+                              Off Campus
+                            </DropdownMenuRadioItem>
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
                   {/* Bio Section */}
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -716,103 +800,36 @@ export default function Home() {
                     />
                   </div>
 
-                  {/* Social Media Accounts Section */}
+                  {/* Instagram Section */}
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                      Social Media Accounts
+                      Instagram
                     </h2>
-                    <div className="space-y-4">
-                      {/* Twitter */}
-                      <div className="relative">
-                        <svg
-                          className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-400"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
-                        </svg>
-                        <input
-                          type="url"
-                          placeholder="Twitter URL"
-                          value={currentUser.socialMedia.twitter}
-                          onChange={(e) =>
-                            updateCurrentUser({
-                              socialMedia: {
-                                ...currentUser.socialMedia,
-                                twitter: e.target.value,
-                              },
-                            })
-                          }
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-
-                      {/* Instagram */}
-                      <div className="relative">
-                        <svg
-                          className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-pink-500"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987 6.62 0 11.987-5.367 11.987-11.987C24.014 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.348-1.051-2.348-2.348s1.051-2.348 2.348-2.348 2.348 1.051 2.348 2.348-1.051 2.348-2.348 2.348zm7.718 0c-1.297 0-2.348-1.051-2.348-2.348s1.051-2.348 2.348-2.348 2.348 1.051 2.348 2.348-1.051 2.348-2.348 2.348z" />
-                        </svg>
-                        <input
-                          type="url"
-                          placeholder="Instagram URL"
-                          value={currentUser.socialMedia.instagram}
-                          onChange={(e) =>
-                            updateCurrentUser({
-                              socialMedia: {
-                                ...currentUser.socialMedia,
-                                instagram: e.target.value,
-                              },
-                            })
-                          }
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-
-                      {/* LinkedIn */}
-                      <div className="relative">
-                        <svg
-                          className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-600"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                        </svg>
-                        <input
-                          type="url"
-                          placeholder="LinkedIn URL"
-                          value={currentUser.socialMedia.linkedin}
-                          onChange={(e) =>
-                            updateCurrentUser({
-                              socialMedia: {
-                                ...currentUser.socialMedia,
-                                linkedin: e.target.value,
-                              },
-                            })
-                          }
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
+                    <div className="relative">
+                      <svg
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-pink-500"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987 6.62 0 11.987-5.367 11.987-11.987C24.014 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.348-1.051-2.348-2.348s1.051-2.348 2.348-2.348 2.348 1.051 2.348 2.348-1.051 2.348-2.348 2.348zm7.718 0c-1.297 0-2.348-1.051-2.348-2.348s1.051-2.348 2.348-2.348 2.348 1.051 2.348 2.348-1.051 2.348-2.348 2.348z" />
+                      </svg>
+                      <input
+                        type="url"
+                        placeholder="Instagram URL"
+                        value={currentUser.socialMedia.instagram}
+                        onChange={(e) =>
+                          updateCurrentUser({
+                            socialMedia: {
+                              ...currentUser.socialMedia,
+                              instagram: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
                     </div>
-                    <Button
-                      variant="outline"
-                      className="mt-4 text-blue-500 border-blue-500 hover:bg-blue-50"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add more
-                    </Button>
                   </div>
                 </div>
-              </div>
-
-              {/* Save Button */}
-              <div className="mt-8 flex justify-end">
-                <Button className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg">
-                  Save Changes
-                </Button>
               </div>
             </div>
           )}

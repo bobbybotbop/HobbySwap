@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { MapPin, Star, BookOpen, ArrowRight } from "lucide-react";
 import { Profile } from "@/types/profile";
+import ProfileModal from "./ProfileModal";
 
 interface ProfileCardProps {
   profile: Profile;
 }
 
 const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 w-full max-w-md border border-gray-100 overflow-hidden">
       {/* Full Width Image with Overlay */}
@@ -84,7 +86,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
 
         {/* Action Section */}
         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-          <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
             More info
           </button>
           <button className="flex items-center space-x-1.5 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
@@ -93,6 +98,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
           </button>
         </div>
       </div>
+
+      {/* Profile Modal */}
+      <ProfileModal
+        profile={profile}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 };

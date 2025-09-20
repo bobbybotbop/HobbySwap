@@ -5,25 +5,11 @@ export interface Profile {
   image: string;
   hobbiesKnown: string[];
   hobbiesWantToLearn: string[];
-  email?: string;
-  phone?: string;
-  role?: string;
-  bio?: string;
-  socialMedia?: {
-    twitter?: string;
-    instagram?: string;
-    linkedin?: string;
-  };
-}
-
-export interface CurrentUserProfile extends Profile {
+  netID: string;
+  bio: string;  
+  instagram: string;
   email: string;
-  phone: string;
-  role: string;
-  bio: string;
   socialMedia: {
-    twitter: string;
     instagram: string;
-    linkedin: string;
   };
 }

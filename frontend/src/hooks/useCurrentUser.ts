@@ -1,38 +1,31 @@
 import { useState } from "react";
-import { CurrentUserProfile } from "@/types/profile";
+import { Profile } from "@/types/profile";
 
 // Example current user profile data
-const initialCurrentUser: CurrentUserProfile = {
+const initialCurrentUser: Profile = {
   id: 0,
   name: "John Doe",
-  location: "New York",
+  location: "West",
   image:
     "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
   hobbiesKnown: ["Web Development", "React", "Node.js"],
   hobbiesWantToLearn: ["Photography", "Cooking", "Yoga"],
-  email: "john.doe@example.com",
-  phone: "5551234567",
-  role: "Software Developer",
+  netID: "jd123",
   bio: "hi!! i want to learn more hobbies because I love entertainment!!!!!!",
+  instagram: "https://instagram.com/johndoe",
+  email: "john.doe@example.com",
   socialMedia: {
-    twitter: "https://twitter.com/johndoe",
     instagram: "https://instagram.com/johndoe",
-    linkedin: "https://linkedin.com/in/johndoe",
   },
 };
 
 export const useCurrentUser = () => {
-  const [currentUser, setCurrentUser] =
-    useState<CurrentUserProfile>(initialCurrentUser);
+  const [currentUser, setCurrentUser] = useState<Profile>(initialCurrentUser);
 
-  const updateCurrentUser = (updates: Partial<CurrentUserProfile>) => {
+  const updateCurrentUser = (updates: Partial<Profile>) => {
     setCurrentUser((prev) => ({
       ...prev,
       ...updates,
-      socialMedia: {
-        ...prev.socialMedia,
-        ...updates.socialMedia,
-      },
     }));
   };
 
