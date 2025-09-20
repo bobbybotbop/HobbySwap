@@ -7,11 +7,11 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 async function normalizeHobbies(rawHobbies: string[]) {
   const prompt = `You are a hobby classification engine. 
 Input: a list of hobbies (free text).
-Output: ONLY a valid JSON array with this exact format:
+Output: ONLY a valid JSON array in this format:
 [
   {
     "hobby": "standardized_short_tag",
-    "related people": ["related1", "related2", "related3"]
+    "related": ["related1", "related2", "related3"]
   }
 ]
 
@@ -27,6 +27,15 @@ IMPORTANT: Use consistent, simple hobby names. Examples:
 - "esports", "gaming", "playing games" -> "gaming"
 - "travel", "exploring", "visiting new places" -> "travel"
 
+Example Input: ["guitar playing", "singing", "cooking]
+Example Output: 
+[
+  { "hobby": "guitar", "related": ["music","instrument","practice"]},
+  { "hobby": "soccer", "related": ["football","sports","team"]},
+  { "hobby": "cooking", "related": ["culinary","baking","recipes"]}
+]
+
+Classify and normalize these hobbies:
 Hobbies: ${JSON.stringify(rawHobbies)}
 
 Return ONLY the JSON array, no other text:`;
@@ -64,7 +73,7 @@ Return ONLY the JSON array, no other text:`;
 /** Takes in json file of user's desired hobbies and outputs people who do those hobbies */
 async function matchUsers(currentUser: any, allUsers: any[]) {
   // Normalize hobbies using AI for better matching
-  console.log("🤖 Normalizing hobbies with AI...");
+  console.log("Normalizing hobbies with AI...");
   
   // Extract raw hobby names
   const currentWantsRaw = currentUser.hobbiesWant.map(h => h.name);
