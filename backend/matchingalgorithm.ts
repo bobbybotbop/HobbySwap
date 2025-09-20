@@ -140,7 +140,7 @@ async function matchUsers(currentUser: any, allUsers: any[]) {
 
 export {normalizeHobbies, matchUsers}
 
-/** Test cases for matchUsers function */
+/** EVERYTHING BELOW IS TEST CASES FOR MATCHUSERS FUNCTION */
 async function testMatchUsers() {
   console.log("=== Testing matchUsers function ===\n");
 
