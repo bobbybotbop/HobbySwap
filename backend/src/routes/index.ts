@@ -16,11 +16,24 @@ const router = Router();
 
 // Health check route
 router.get("/health", (req: Request, res: Response) => {
+  // Disable CORS by allowing all origins
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "*");
+  res.header("Access-Control-Allow-Headers", "*");
+
   res.status(200).json({
     status: "OK",
     message: "Server is running",
     timestamp: new Date().toISOString(),
   });
+});
+
+// Handle preflight OPTIONS requests for health endpoint
+router.options("/health", (req: Request, res: Response) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "*");
+  res.header("Access-Control-Allow-Headers", "*");
+  res.status(200).end();
 });
 
 // API info route
@@ -81,7 +94,7 @@ router.post("/:id/send", sendUser); // POST /api/users/send (more RESTful)
 // PATCH routes (partial updates)
 router.patch("/password", updatePassword); // PATCH /api/users/password
 router.patch("/:id", updateUserPersonalInformation); // PATCH /api/users/123 (general update)
-router.patch("/updateHobbies/:id", updateUserHobbies)
-router.patch("/updateHobbiesToLearn/:id", updateUserHobbiesWant)
+router.patch("/updateHobbies/:id", updateUserHobbies);
+router.patch("/updateHobbiesToLearn/:id", updateUserHobbiesWant);
 
 export default router;

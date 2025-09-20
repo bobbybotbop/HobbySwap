@@ -23,6 +23,9 @@ import {
   X,
   Upload,
   Loader2,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
 } from "lucide-react";
 import { SmileSquare, Star, CogFour, Send, Inbox } from "@mynaui/icons-react";
 import ProfileCard from "@/components/ProfileCard";
@@ -136,6 +139,10 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { currentUser, updateCurrentUser } = useCurrentUser();
   const [profileLocation, setProfileLocation] = useState(currentUser.location);
+  const [serverStatus, setServerStatus] = useState<
+    "checking" | "online" | "offline" | null
+  >(null);
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
 
   const handleAddHobbyKnown = () => {
     if (newHobbyKnown.trim()) {
@@ -204,6 +211,24 @@ export default function Home() {
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const checkServerHealth = async () => {
+    setServerStatus("checking");
+    setLastChecked(new Date());
+
+    try {
+      const response = await fetch("http://localhost:6767/api/users/health");
+      if (response.ok) {
+        const data = await response.json();
+        setServerStatus("online");
+      } else {
+        setServerStatus("offline");
+      }
+    } catch (error) {
+      console.error("Health check failed:", error);
+      setServerStatus("offline");
+    }
   };
 
   return (
@@ -487,13 +512,91 @@ export default function Home() {
           )}
 
           {activeTab === "Settings" && (
-            <div className="flex flex-col items-center justify-center h-full">
-              <div className="text-center">
-                <CogFour className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-                <h2 className="text-2xl font-semibold text-gray-600 mb-2">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white rounded-xl shadow-lg p-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-8">
                   Settings
-                </h2>
-                <p className="text-gray-500">Settings panel coming soon</p>
+                </h1>
+
+                {/* Server Health Check Section */}
+                <div className="bg-gray-50 rounded-lg p-6 mb-8">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                    Server Status
+                  </h2>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        {serverStatus === "checking" && (
+                          <>
+                            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                            <span className="text-blue-600 font-medium">
+                              Checking...
+                            </span>
+                          </>
+                        )}
+                        {serverStatus === "online" && (
+                          <>
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                            <span className="text-green-600 font-medium">
+                              Server Online
+                            </span>
+                          </>
+                        )}
+                        {serverStatus === "offline" && (
+                          <>
+                            <XCircle className="w-5 h-5 text-red-500" />
+                            <span className="text-red-600 font-medium">
+                              Server Offline
+                            </span>
+                          </>
+                        )}
+                        {serverStatus === null && (
+                          <>
+                            <div className="w-5 h-5 rounded-full bg-gray-300" />
+                            <span className="text-gray-600 font-medium">
+                              Not Checked
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      {lastChecked && (
+                        <span className="text-sm text-gray-500">
+                          Last checked: {lastChecked.toLocaleTimeString()}
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      onClick={checkServerHealth}
+                      disabled={serverStatus === "checking"}
+                      className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
+                    >
+                      <RefreshCw
+                        className={`w-4 h-4 mr-2 ${
+                          serverStatus === "checking" ? "animate-spin" : ""
+                        }`}
+                      />
+                      Check Server Health
+                    </Button>
+                  </div>
+                  <div className="mt-4 text-sm text-gray-600">
+                    <p>
+                      This will test the connection to the backend server at{" "}
+                      <code className="bg-gray-200 px-2 py-1 rounded">
+                        http://localhost:3000/api/users/health
+                      </code>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Additional Settings Placeholder */}
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                    Additional Settings
+                  </h2>
+                  <p className="text-gray-500">
+                    More settings options will be added here in future updates.
+                  </p>
+                </div>
               </div>
             </div>
           )}
