@@ -139,6 +139,45 @@ async function matchUsers(currentUser: any, allUsers: any[]) {
 }
 
 export {normalizeHobbies, matchUsers}
+/** 
+async function searchUsers(currentUser: any, allUsers: any[], searchedHobby: string) {
+  c// 1. Input validation
+  if (!searchedHobby || searchedHobby.trim() === "") {
+    console.log("Please enter a hobby to search.");
+    return;
+  }
+
+  // 2. Normalize the searched hobby
+  const normalizedHobbyArray = await normalizeHobbies([searchedHobby]);
+  const normalizedHobby = normalizedHobbyArray[0]?.hobby.toLowerCase();
+
+  if (!normalizedHobby) {
+    console.log("Could not normalize the hobby. Try a different term.");
+    return;
+  }
+
+  // 3. Get all matches
+  const matchedUsers = await matchUsers(currentUser, allUsers);
+
+  // 4. Filter matches to only users who can teach this hobby
+  const filteredMatches = matchedUsers.filter(match =>
+    match.theyKnowYouWant.map(h => h.toLowerCase()).includes(normalizedHobby)
+  );
+
+  if (filteredMatches.length === 0) {
+    console.log(`No users found who can teach "${searchedHobby}".`);
+    return;
+  }
+
+  // 5. Display the filtered matches
+  console.log(`Users who can teach "${searchedHobby}":`);
+  filteredMatches.forEach(match => {
+    console.log(`- ${match.user.name || match.user._id} (Score: ${match.score})`);
+    console.log(`   They can teach you: ${match.theyKnowYouWant.join(", ")}`);
+    console.log(`   You can teach them: ${match.theyWantYouKnow.join(", ")}\n`);
+  });
+}
+*/
 
 /** EVERYTHING BELOW IS TEST CASES FOR MATCHUSERS FUNCTION */
 async function testMatchUsers() {
@@ -270,3 +309,82 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     }
   })();
 }
+
+/** Test cases for the searchUsers function 
+async function testSearchUsersOriginal() {
+  console.log("=== Testing original searchUsers function ===\n");
+
+  const currentUser = {
+    _id: "user1",
+    name: "CurrentUser",
+    hobbiesWant: [
+      { name: "guitar" },
+      { name: "cooking" },
+      { name: "photography" }
+    ],
+    hobbiesKnow: [
+      { name: "soccer" },
+      { name: "painting" },
+      { name: "coding" }
+    ]
+  };
+
+  const allUsers = [
+    {
+      _id: "user2",
+      name: "Alice",
+      hobbiesKnow: [{ name: "guitar" }, { name: "cooking" }],
+      hobbiesWant: [{ name: "soccer" }, { name: "painting" }]
+    },
+    {
+      _id: "user3",
+      name: "Bob",
+      hobbiesKnow: [{ name: "photography" }],
+      hobbiesWant: [{ name: "coding" }]
+    },
+    {
+      _id: "user4",
+      name: "Charlie",
+      hobbiesKnow: [{ name: "dancing" }, { name: "singing" }],
+      hobbiesWant: [{ name: "guitar" }]
+    },
+    {
+      _id: "user5",
+      name: "Diana",
+      hobbiesKnow: [{ name: "guitar" }, { name: "cooking" }, { name: "photography" }],
+      hobbiesWant: [{ name: "soccer" }, { name: "painting" }, { name: "coding" }]
+    },
+    {
+      _id: "user6",
+      name: "Eve",
+      hobbiesKnow: [{ name: "tennis" }],
+      hobbiesWant: [{ name: "swimming" }]
+    }
+  ];
+
+  // --- Test 1: Single hobby search ---
+  console.log("Test 1: Search for 'guitar'");
+  await searchUsers(currentUser, allUsers, "guitar");
+
+  // --- Test 2: Single hobby search ---
+  console.log("Test 2: Search for 'photography'");
+  await searchUsers(currentUser, allUsers, "photography");
+
+  // --- Test 3: Single hobby search with no match ---
+  console.log("Test 3: Search for 'swimming'");
+  await searchUsers(currentUser, allUsers, "swimming");
+
+  // --- Test 4: Case-insensitive search ---
+  console.log("Test 4: Search for 'GUITAR'");
+  await searchUsers(currentUser, allUsers, "GUITAR");
+
+  // --- Test 5: Empty input ---
+  console.log("Test 5: Search with empty string");
+  await searchUsers(currentUser, allUsers, "");
+
+  // --- Test 6: Search for a hobby multiple users can teach ---
+  console.log("Test 6: Search for 'cooking'");
+  await searchUsers(currentUser, allUsers, "cooking");
+}
+
+*/
