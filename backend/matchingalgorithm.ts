@@ -30,8 +30,8 @@ IMPORTANT: Use consistent, simple hobby names. Examples:
 Example Input: ["guitar playing", "singing", "cooking]
 Example Output: 
 [
-  { "hobby": "guitar", "related": ["music","instrument","practice"]},
-  { "hobby": "soccer", "related": ["football","sports","team"]},
+  { "hobby": "guitar", "related": ["music","instrument","practice", "songwriting"]},
+  { "hobby": "soccer", "related": ["football","sports","team", "tennis"]},
   { "hobby": "cooking", "related": ["culinary","baking","recipes"]}
 ]
 
