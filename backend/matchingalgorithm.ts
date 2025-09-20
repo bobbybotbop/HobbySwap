@@ -22,6 +22,8 @@ IMPORTANT: Use consistent, simple hobby names. Examples:
 - "painting", "art", "drawing" → "painting"
 - "photography", "taking photos", "camera" → "photography"
 - "coding", "programming", "software development" → "coding"
+- "knitting", "crochet", "sewing" -> "knitting"
+- "yoga", "meditation", "mindfulness" -> "wellness"
 
 Hobbies: ${JSON.stringify(rawHobbies)}
 
