@@ -11,7 +11,7 @@ Output: ONLY a valid JSON array with this exact format:
 [
   {
     "hobby": "standardized_short_tag",
-    "related": ["related1", "related2", "related3"]
+    "related people": ["related1", "related2", "related3"]
   }
 ]
 
@@ -24,6 +24,8 @@ IMPORTANT: Use consistent, simple hobby names. Examples:
 - "coding", "programming", "software development" → "coding"
 - "knitting", "crochet", "sewing" -> "knitting"
 - "yoga", "meditation", "mindfulness" -> "wellness"
+- "esports", "gaming", "playing games" -> "gaming"
+- "travel", "exploring", "visiting new places" -> "travel"
 
 Hobbies: ${JSON.stringify(rawHobbies)}
 
@@ -79,7 +81,7 @@ async function matchUsers(currentUser: any, allUsers: any[]) {
   const currentWants = new Set(normalizedWants.map(h => h.hobby.toLowerCase()));
   const currentKnows = new Set(normalizedKnows.map(h => h.hobby.toLowerCase()));
   
-  console.log("✅ Hobbies normalized successfully");
+  console.log("Hobbies normalized successfully");
 
   const matches: Array<{
     user: any;
@@ -230,13 +232,13 @@ async function testMatchUsers() {
   
   // Test 3: User6 should not be in matches (score 0)
   const user6Match = matches.find(m => m.user._id === "user6");
-  console.log(`✓ User6 excluded: ${user6Match ? "❌ FAIL" : "✅ PASS"}`);
+  console.log(`✓ User6 excluded: ${user6Match ? "FAIL" : "PASS"}`);
   
   // Test 4: Scores should be in descending order
   const scoresDescending = matches.every((match, i) => 
     i === 0 || match.score <= matches[i-1].score
   );
-  console.log(`✓ Scores in descending order: ${scoresDescending ? "✅ PASS" : "❌ FAIL"}`);
+  console.log(`✓ Scores in descending order: ${scoresDescending ? "PASS" : "FAIL"}`);
 
   return matches;
 }
