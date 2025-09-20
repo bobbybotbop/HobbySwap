@@ -10,6 +10,14 @@ frontend/out/
 # Production builds
 build/
 dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production builds
+/frontend/.next/
+/frontend/out/
+/backend/dist/
 
 # Environment variables
 .env
@@ -23,6 +31,24 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs
+*.log
 
 # Runtime data
 pids
@@ -61,6 +87,9 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
+# dotenv environment variables file
+.env
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
@@ -95,3 +124,23 @@ temp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+# next.js build output
+.next
+
+# nuxt.js build output
+.nuxt
+
+# vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
