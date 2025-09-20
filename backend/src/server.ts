@@ -1,30 +1,33 @@
-import express from "express";
-import cors from "cors";
-import helmet from "helmet";
-import morgan from "morgan";
-import dotenv from "dotenv";
-import apiRoutes from "./routes/index";
-
-// Load environment variables
+// Config file
 dotenv.config();
+const PORT = process.env.PORT || 3000;
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+import express, { Application } from "express";
+import mongoose from "mongoose";
+import userRoute from "./routes/index";
+import dotenv from "dotenv";
 
-// Middleware
-app.use(helmet());
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    credentials: true,
-  })
-);
-app.use(morgan("combined"));
+
+const app: Application = express();
+
+// Middleware to parse JSON
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// API routes
-app.use("/api", apiRoutes);
+// Mount routes
+app.use("./api/users", userRoute);
+
+console.log("Hello")
+
+mongoose.connect(process.env.MONGO_URI!)
+  .then(() => {
+    console.log("Connected to Database");
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Database connection failed:", err);
+  });
 
 // Error handling middleware
 app.use(
@@ -50,11 +53,3 @@ app.use("*", (req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
-});
-
-export default app;
