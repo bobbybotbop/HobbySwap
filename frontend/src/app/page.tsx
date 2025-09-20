@@ -23,80 +23,74 @@ import {
   X,
 } from "lucide-react";
 import { SmileSquare, Star, CogFour, Send, Inbox } from "@mynaui/icons-react";
-
-interface Profile {
-  id: number;
-  name: string;
-  age: number;
-  location: string;
-  image: string;
-  isOnline: boolean;
-}
+import ProfileCard from "@/components/ProfileCard";
+import { Profile } from "@/types/profile";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const profilesData = [
   {
     name: "Olivia",
-    age: 29,
     location: "New York",
     image:
       "https://plus.unsplash.com/premium_photo-1682096181675-12f8293cd31e?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    isOnline: false,
+    hobbiesKnown: ["Photography", "Cooking", "Yoga"],
+    hobbiesWantToLearn: ["Guitar", "Pottery", "Rock Climbing"],
   },
   {
     name: "Natalia",
-    age: 20,
     location: "Kiev",
     image:
       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=400&fit=crop",
-    isOnline: true,
+    hobbiesKnown: ["Painting", "Dancing", "Languages"],
+    hobbiesWantToLearn: ["Piano", "Gardening", "Chess"],
   },
   {
     name: "Ava",
-    age: 22,
     location: "London",
     image:
       "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=400&fit=crop",
-    isOnline: false,
+    hobbiesKnown: ["Writing", "Running", "Reading"],
+    hobbiesWantToLearn: ["Sewing", "Meditation", "Calligraphy"],
   },
   {
     name: "Emilia",
-    age: 23,
     location: "London",
     image:
       "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=400&fit=crop",
-    isOnline: false,
+    hobbiesKnown: ["Swimming", "Baking", "Knitting"],
+    hobbiesWantToLearn: ["Violin", "Woodworking", "Astronomy"],
   },
   {
     name: "Elizabeth",
-    age: 21,
     location: "Hamburg",
     image:
       "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=300&h=400&fit=crop",
-    isOnline: false,
+    hobbiesKnown: ["Cycling", "Drawing", "Hiking"],
+    hobbiesWantToLearn: ["Coding", "Martial Arts", "Origami"],
   },
   {
     name: "Camila",
-    age: 24,
     location: "Munich",
     image:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop",
-    isOnline: false,
+    hobbiesKnown: ["Tennis", "Singing", "Scrapbooking"],
+    hobbiesWantToLearn: ["Surfing", "Jewelry Making", "Archery"],
   },
   {
     name: "Layla",
-    age: 20,
     location: "Krakow",
     image:
       "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&h=400&fit=crop",
-    isOnline: false,
+    hobbiesKnown: ["Volleyball", "Crafts", "Travel"],
+    hobbiesWantToLearn: ["Skiing", "Digital Art", "Mixology"],
   },
   {
     name: "Isabella",
-    age: 25,
     location: "Oslo",
     image:
       "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&h=400&fit=crop",
-    isOnline: true,
+    hobbiesKnown: ["Skiing", "Photography", "Cooking"],
+    hobbiesWantToLearn: ["Ice Skating", "Pottery", "Languages"],
   },
 ];
 
@@ -111,6 +105,34 @@ export default function Home() {
   const [location, setLocation] = useState("");
   const [age, setAge] = useState("");
   const [hobby, setHobby] = useState("");
+  const [newHobbyKnown, setNewHobbyKnown] = useState("");
+  const [newHobbyWantToLearn, setNewHobbyWantToLearn] = useState("");
+  const [showAddHobbyKnown, setShowAddHobbyKnown] = useState(false);
+  const [showAddHobbyWantToLearn, setShowAddHobbyWantToLearn] = useState(false);
+  const { currentUser, updateCurrentUser } = useCurrentUser();
+
+  const handleAddHobbyKnown = () => {
+    if (newHobbyKnown.trim()) {
+      updateCurrentUser({
+        hobbiesKnown: [...currentUser.hobbiesKnown, newHobbyKnown.trim()],
+      });
+      setNewHobbyKnown("");
+      setShowAddHobbyKnown(false);
+    }
+  };
+
+  const handleAddHobbyWantToLearn = () => {
+    if (newHobbyWantToLearn.trim()) {
+      updateCurrentUser({
+        hobbiesWantToLearn: [
+          ...currentUser.hobbiesWantToLearn,
+          newHobbyWantToLearn.trim(),
+        ],
+      });
+      setNewHobbyWantToLearn("");
+      setShowAddHobbyWantToLearn(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-purple-100 flex">
@@ -128,13 +150,19 @@ export default function Home() {
         >
           <div className="flex flex-col items-center space-y-3">
             {/* Profile Picture */}
-            <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center">
-              <span className="text-gray-600 font-semibold text-xl">J</span>
+            <div className="w-16 h-16 rounded-full overflow-hidden">
+              <img
+                src={currentUser.image}
+                alt={currentUser.name}
+                className="w-full h-full object-cover"
+              />
             </div>
 
             {/* Name with Edit Icon */}
             <div className="flex items-center space-x-2">
-              <span className="font-semibold text-gray-900 text-lg">John</span>
+              <span className="font-semibold text-gray-900 text-lg">
+                {currentUser.name}
+              </span>
               <svg
                 className="w-4 h-4 text-gray-500"
                 fill="none"
@@ -149,12 +177,6 @@ export default function Home() {
                 />
               </svg>
             </div>
-
-            {/* Popularity */}
-            {/* <p className="text-sm text-gray-600">
-              Popularity:{" "}
-              <span className="text-green-600 font-semibold">very high</span>
-            </p> */}
           </div>
         </div>
 
@@ -325,44 +347,9 @@ export default function Home() {
           }`}
         >
           {activeTab === "For You" && (
-            <div className="grid grid-cols-4 gap-6">
+            <div className="grid grid-cols-3 gap-6">
               {profiles.map((profile) => (
-                <div
-                  key={profile.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-                >
-                  <div className="relative">
-                    <img
-                      src={profile.image}
-                      alt={profile.name}
-                      className="w-full h-64 object-cover"
-                    />
-                    {profile.isOnline && (
-                      <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 text-lg">
-                      {profile.name}, {profile.age}
-                    </h3>
-                    <div className="flex items-center mt-2">
-                      <svg
-                        className="w-4 h-4 text-red-500 mr-1"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <span className="text-gray-600 text-sm">
-                        {profile.location}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <ProfileCard key={profile.id} profile={profile} />
               ))}
             </div>
           )}
@@ -440,33 +427,30 @@ export default function Home() {
           )}
 
           {activeTab === "Profile Edit" && (
-            <div className="max-w-6xl bg-white rounded-xl shadow-lg p-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-8">
+            <div className="max-w-6xl bg-white rounded-xl shadow-lg p-6 pl-8">
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">
                 Edit Profile
               </h1>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Column */}
                 <div className="space-y-8">
-                  {/* Your Photo Section */}
+                  {/* Profile Preview Section */}
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                      Your Photo
+                      Profile Preview
                     </h2>
                     <div className="flex flex-col items-center space-y-4">
-                      {/* Profile Picture */}
-                      <div className="w-32 h-32 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 rounded-full flex items-center justify-center relative overflow-hidden">
-                        <div className="w-full h-full bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold text-4xl">
-                            J
-                          </span>
-                        </div>
+                      <div className="w-full max-w-sm">
+                        <ProfileCard profile={currentUser} />
                       </div>
 
                       <div className="text-center">
-                        <p className="text-sm text-gray-600 mb-2">Your Photo</p>
+                        <p className="text-sm text-gray-600 mb-2">
+                          Profile Preview
+                        </p>
                         <p className="text-xs text-gray-500">
-                          This will be displayed on your profile.
+                          This is how your profile will appear to other users.
                         </p>
                       </div>
 
@@ -475,10 +459,10 @@ export default function Home() {
                           variant="outline"
                           className="border-blue-500 text-blue-500 hover:bg-blue-50"
                         >
-                          Upload New
+                          Upload New Photo
                         </Button>
                         <Button className="bg-blue-500 hover:bg-blue-600">
-                          Save
+                          Save Changes
                         </Button>
                       </div>
                     </div>
@@ -496,7 +480,10 @@ export default function Home() {
                         <input
                           type="text"
                           placeholder="Full Name"
-                          defaultValue="John Doe"
+                          value={currentUser.name}
+                          onChange={(e) =>
+                            updateCurrentUser({ name: e.target.value })
+                          }
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
@@ -507,7 +494,10 @@ export default function Home() {
                         <input
                           type="email"
                           placeholder="Email Address"
-                          defaultValue="john.doe@example.com"
+                          value={currentUser.email}
+                          onChange={(e) =>
+                            updateCurrentUser({ email: e.target.value })
+                          }
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
@@ -527,7 +517,10 @@ export default function Home() {
                           <input
                             type="tel"
                             placeholder="Mobile Number"
-                            defaultValue="5551234567"
+                            value={currentUser.phone}
+                            onChange={(e) =>
+                              updateCurrentUser({ phone: e.target.value })
+                            }
                             className="flex-1 pr-4 py-3 border border-gray-300 border-l-0 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
@@ -539,7 +532,24 @@ export default function Home() {
                         <input
                           type="text"
                           placeholder="Role"
-                          defaultValue="Software Developer"
+                          value={currentUser.role}
+                          onChange={(e) =>
+                            updateCurrentUser({ role: e.target.value })
+                          }
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+
+                      {/* Location */}
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Location"
+                          value={currentUser.location}
+                          onChange={(e) =>
+                            updateCurrentUser({ location: e.target.value })
+                          }
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
@@ -549,6 +559,148 @@ export default function Home() {
 
                 {/* Right Column */}
                 <div className="space-y-8">
+                  {/* Hobbies I Know Section */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                      Hobbies I Know
+                    </h2>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {currentUser.hobbiesKnown.map((hobby, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800"
+                        >
+                          {hobby}
+                          <X
+                            className="ml-2 w-4 h-4 cursor-pointer hover:text-red-500"
+                            onClick={() => {
+                              const updatedHobbies =
+                                currentUser.hobbiesKnown.filter(
+                                  (_, i) => i !== index
+                                );
+                              updateCurrentUser({
+                                hobbiesKnown: updatedHobbies,
+                              });
+                            }}
+                          />
+                        </span>
+                      ))}
+                    </div>
+
+                    {showAddHobbyKnown ? (
+                      <div className="flex gap-2 mb-4">
+                        <input
+                          type="text"
+                          placeholder="Enter new hobby"
+                          value={newHobbyKnown}
+                          onChange={(e) => setNewHobbyKnown(e.target.value)}
+                          onKeyPress={(e) =>
+                            e.key === "Enter" && handleAddHobbyKnown()
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          autoFocus
+                        />
+                        <Button
+                          onClick={handleAddHobbyKnown}
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                        >
+                          Add
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowAddHobbyKnown(false);
+                            setNewHobbyKnown("");
+                          }}
+                          className="border-gray-300"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowAddHobbyKnown(true)}
+                        className="text-green-500 border-green-500 hover:bg-green-50"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add more
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Hobbies I Want to Learn Section */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                      Hobbies I Want to Learn
+                    </h2>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {currentUser.hobbiesWantToLearn.map((hobby, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                        >
+                          {hobby}
+                          <X
+                            className="ml-2 w-4 h-4 cursor-pointer hover:text-red-500"
+                            onClick={() => {
+                              const updatedHobbies =
+                                currentUser.hobbiesWantToLearn.filter(
+                                  (_, i) => i !== index
+                                );
+                              updateCurrentUser({
+                                hobbiesWantToLearn: updatedHobbies,
+                              });
+                            }}
+                          />
+                        </span>
+                      ))}
+                    </div>
+
+                    {showAddHobbyWantToLearn ? (
+                      <div className="flex gap-2 mb-4">
+                        <input
+                          type="text"
+                          placeholder="Enter new hobby"
+                          value={newHobbyWantToLearn}
+                          onChange={(e) =>
+                            setNewHobbyWantToLearn(e.target.value)
+                          }
+                          onKeyPress={(e) =>
+                            e.key === "Enter" && handleAddHobbyWantToLearn()
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          autoFocus
+                        />
+                        <Button
+                          onClick={handleAddHobbyWantToLearn}
+                          className="bg-blue-500 hover:bg-blue-600 text-white"
+                        >
+                          Add
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowAddHobbyWantToLearn(false);
+                            setNewHobbyWantToLearn("");
+                          }}
+                          className="border-gray-300"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowAddHobbyWantToLearn(true)}
+                        className="text-blue-500 border-blue-500 hover:bg-blue-50"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add more
+                      </Button>
+                    )}
+                  </div>
+
                   {/* Bio Section */}
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -556,49 +708,12 @@ export default function Home() {
                     </h2>
                     <textarea
                       placeholder="Tell us about yourself..."
-                      defaultValue="Hey, I'm a software developer specialized in full-stack web development with 5 years of experience. I love working on innovative projects and collaborating with creative teams to build amazing user experiences."
+                      value={currentUser.bio}
+                      onChange={(e) =>
+                        updateCurrentUser({ bio: e.target.value })
+                      }
                       className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                     />
-                  </div>
-
-                  {/* Industry/Interests Section */}
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                      Industry/Interests
-                    </h2>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-                        Web Development
-                        <X className="ml-2 w-4 h-4 cursor-pointer hover:text-red-500" />
-                      </span>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-                        React
-                        <X className="ml-2 w-4 h-4 cursor-pointer hover:text-red-500" />
-                      </span>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800">
-                        Node.js
-                        <X className="ml-2 w-4 h-4 cursor-pointer hover:text-red-500" />
-                      </span>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800">
-                        TypeScript
-                        <X className="ml-2 w-4 h-4 cursor-pointer hover:text-red-500" />
-                      </span>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-red-100 text-red-800">
-                        UI/UX
-                        <X className="ml-2 w-4 h-4 cursor-pointer hover:text-red-500" />
-                      </span>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-indigo-100 text-indigo-800">
-                        Startups
-                        <X className="ml-2 w-4 h-4 cursor-pointer hover:text-red-500" />
-                      </span>
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="text-blue-500 border-blue-500 hover:bg-blue-50"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add more
-                    </Button>
                   </div>
 
                   {/* Social Media Accounts Section */}
@@ -619,7 +734,15 @@ export default function Home() {
                         <input
                           type="url"
                           placeholder="Twitter URL"
-                          defaultValue="https://twitter.com/johndoe"
+                          value={currentUser.socialMedia.twitter}
+                          onChange={(e) =>
+                            updateCurrentUser({
+                              socialMedia: {
+                                ...currentUser.socialMedia,
+                                twitter: e.target.value,
+                              },
+                            })
+                          }
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
@@ -636,7 +759,15 @@ export default function Home() {
                         <input
                           type="url"
                           placeholder="Instagram URL"
-                          defaultValue="https://instagram.com/johndoe"
+                          value={currentUser.socialMedia.instagram}
+                          onChange={(e) =>
+                            updateCurrentUser({
+                              socialMedia: {
+                                ...currentUser.socialMedia,
+                                instagram: e.target.value,
+                              },
+                            })
+                          }
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
@@ -653,7 +784,15 @@ export default function Home() {
                         <input
                           type="url"
                           placeholder="LinkedIn URL"
-                          defaultValue="https://linkedin.com/in/johndoe"
+                          value={currentUser.socialMedia.linkedin}
+                          onChange={(e) =>
+                            updateCurrentUser({
+                              socialMedia: {
+                                ...currentUser.socialMedia,
+                                linkedin: e.target.value,
+                              },
+                            })
+                          }
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
