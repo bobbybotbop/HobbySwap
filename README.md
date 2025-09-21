@@ -5,7 +5,6 @@ A platform for Cornell University affiliated hobby enthusiasts to connect, share
 ![Next.js](https://img.shields.io/badge/Next.js-000000?logo=nextdotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white)
-![ESLint](https://img.shields.io/badge/ESLint-4B32C3?logo=eslint&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white)
 
@@ -25,7 +24,6 @@ A platform for Cornell University affiliated hobby enthusiasts to connect, share
 - **⚛️ Next.js 15** - React framework with App Router
 - **🟦 TypeScript** - Type-safe development
 - **🎨 Tailwind CSS** - Utility-first CSS framework
-- **🧹 ESLint** - Code linting and formatting
 
 ### Backend
 
