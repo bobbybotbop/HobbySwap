@@ -28,13 +28,7 @@ import {
   Search,
   Users,
 } from "lucide-react";
-import {
-  Search as SearchIcon,
-  Star,
-  CogFour,
-  Send,
-  Inbox,
-} from "@mynaui/icons-react";
+import { Search as SearchIcon, Star, Send, Inbox } from "@mynaui/icons-react";
 import ProfileCard from "@/components/ProfileCard";
 import MatchesList from "@/components/MatchesList";
 import ProfileModal from "@/components/ProfileModal";
@@ -148,14 +142,6 @@ export default function Home() {
   const { currentUser, updateCurrentUser, replaceCurrentUser } =
     useCurrentUser();
   const [profileLocation, setProfileLocation] = useState(currentUser.location);
-  const [serverStatus, setServerStatus] = useState<
-    "checking" | "online" | "offline" | null
-  >(null);
-  const [lastChecked, setLastChecked] = useState<Date | null>(null);
-  // Algorithms status state removed
-  // Algorithms details state removed
-  const [isImportingUsers, setIsImportingUsers] = useState(false);
-  const [importStatus, setImportStatus] = useState<string>("");
   const [backendProfiles, setBackendProfiles] = useState<Profile[]>([]);
   const [useBackendData, setUseBackendData] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -428,26 +414,6 @@ export default function Home() {
       setIsSaving(false);
     }
   };
-
-  const checkServerHealth = async () => {
-    setServerStatus("checking");
-    setLastChecked(new Date());
-
-    try {
-      const response = await fetch("http://localhost:6767/api/users/health");
-      if (response.ok) {
-        const data = await response.json();
-        setServerStatus("online");
-      } else {
-        setServerStatus("offline");
-      }
-    } catch (error) {
-      console.error("Health check failed:", error);
-      setServerStatus("offline");
-    }
-  };
-
-  // Algorithms health check function removed
 
   const fetchUsersFromBackend = async () => {
     try {
@@ -812,155 +778,6 @@ export default function Home() {
     return backendProfiles.find((p) => p.netID === netId) || null;
   };
 
-  // Test users data that matches the user model structure
-  const testUsers = [
-    {
-      personalInformation: {
-        netid: "marcus01",
-        name: "Marcus",
-        age: "Sophomore",
-        location: "West",
-        image:
-          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
-        instagram: "https://instagram.com/marcus_basketball",
-        encryptedPassword: "password123",
-      },
-      hobbies: ["Basketball", "Coding", "Gaming"],
-      hobbiesWantToLearn: ["Photography", "Cooking", "Guitar"],
-    },
-    {
-      personalInformation: {
-        netid: "sophia02",
-        name: "Sophia",
-        age: "Junior",
-        location: "North",
-        image:
-          "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=400&fit=crop",
-        instagram: "https://instagram.com/sophia_art",
-        encryptedPassword: "password123",
-      },
-      hobbies: ["Yoga", "Reading", "Painting"],
-      hobbiesWantToLearn: ["Rock Climbing", "Piano", "Languages"],
-    },
-    {
-      personalInformation: {
-        netid: "alex03",
-        name: "Alex",
-        age: "Freshman",
-        location: "Central",
-        image:
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop",
-        instagram: "https://instagram.com/alex_swimmer",
-        encryptedPassword: "password123",
-      },
-      hobbies: ["Swimming", "Chess", "Writing"],
-      hobbiesWantToLearn: ["Dancing", "Woodworking", "Astronomy"],
-    },
-    {
-      personalInformation: {
-        netid: "maya04",
-        name: "Maya",
-        age: "Senior",
-        location: "Off Campus",
-        image:
-          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=400&fit=crop",
-        instagram: "https://instagram.com/maya_gardens",
-        encryptedPassword: "password123",
-      },
-      hobbies: ["Running", "Baking", "Gardening"],
-      hobbiesWantToLearn: ["Violin", "Pottery", "Meditation"],
-    },
-    {
-      personalInformation: {
-        netid: "jordan05",
-        name: "Jordan",
-        age: "Graduate",
-        location: "West",
-        image:
-          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=400&fit=crop",
-        instagram: "https://instagram.com/jordan_travels",
-        encryptedPassword: "password123",
-      },
-      hobbies: ["Tennis", "Drawing", "Travel"],
-      hobbiesWantToLearn: ["Skiing", "Digital Art", "Calligraphy"],
-    },
-  ];
-
-  const importTestUsers = async () => {
-    setIsImportingUsers(true);
-    setImportStatus("Starting import...");
-
-    let successCount = 0;
-    let errorCount = 0;
-
-    console.log("🚀 Starting import of test users...");
-    console.log("📊 Test users data:", testUsers);
-
-    try {
-      for (let i = 0; i < testUsers.length; i++) {
-        const user = testUsers[i];
-
-        console.log(`📤 Importing user ${i + 1}/${testUsers.length}:`);
-        console.log(`   📝 Name: ${user.personalInformation.name}`);
-        console.log(`   🆔 NetID: ${user.personalInformation.netid}`);
-        console.log(`   🖼️ Image URL: ${user.personalInformation.image}`);
-        console.log(`   📍 Location: ${user.personalInformation.location}`);
-
-        setImportStatus(
-          `Importing ${user.personalInformation.name} (${i + 1}/${
-            testUsers.length
-          })...`
-        );
-
-        try {
-          const response = await fetch("http://localhost:6767/api/users", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(user),
-          });
-
-          if (response.ok) {
-            console.log(
-              `✅ Successfully imported ${user.personalInformation.name}`
-            );
-            successCount++;
-          } else {
-            const data = await response.json();
-            console.error(
-              `❌ Failed to import ${user.personalInformation.name}:`,
-              data.message
-            );
-            errorCount++;
-          }
-        } catch (error) {
-          console.error(
-            `❌ Error importing ${user.personalInformation.name}:`,
-            error
-          );
-          errorCount++;
-        }
-
-        // Small delay between requests to avoid overwhelming the server
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      }
-
-      setImportStatus(
-        `Import complete! ${successCount} users imported successfully, ${errorCount} failed.`
-      );
-    } catch (error) {
-      console.error("Import process failed:", error);
-      setImportStatus(
-        "Import process failed. Please check the console for details."
-      );
-    } finally {
-      setIsImportingUsers(false);
-      // Clear status after 5 seconds
-      setTimeout(() => setImportStatus(""), 5000);
-    }
-  };
-
   // Filter profiles based on search query
   const filterProfiles = (profiles: Profile[]) => {
     if (!searchQuery.trim()) return profiles;
@@ -1038,7 +855,6 @@ export default function Home() {
               { name: "Sent", icon: <Send className="w-5 h-5" /> },
               { name: "Recieved", icon: <Inbox className="w-5 h-5" /> },
               { name: "Favorites", icon: <Star className="w-5 h-5" /> },
-              { name: "Settings", icon: <CogFour className="w-5 h-5" /> },
             ].map((item) => (
               <li key={item.name}>
                 <button
@@ -1060,8 +876,8 @@ export default function Home() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Top Header - Hidden for Profile Edit and Settings tabs */}
-        {activeTab !== "Profile Edit" && activeTab !== "Settings" && (
+        {/* Top Header - Hidden for Profile Edit tab */}
+        {activeTab !== "Profile Edit" && (
           <div className="px-6 py-4 flex items-center justify-between">
             {/* Search Bar */}
             <div className="flex-1 mr-6">
@@ -1203,9 +1019,7 @@ export default function Home() {
         {/* Main Content Area */}
         <div
           className={`flex-1 px-6 pb-6 ${
-            activeTab === "Profile Edit" || activeTab === "Settings"
-              ? "pt-8"
-              : "pt-2"
+            activeTab === "Profile Edit" ? "pt-8" : "pt-2"
           }`}
         >
           {activeTab === "Search" && (
@@ -1448,197 +1262,6 @@ export default function Home() {
                 </div>
               )}
             </>
-          )}
-
-          {activeTab === "Settings" && (
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-xl shadow-lg p-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">
-                  Settings
-                </h1>
-
-                {/* Server Health Check Section */}
-                <div className="bg-gray-50 rounded-lg p-6 mb-8">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    Server Status
-                  </h2>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        {serverStatus === "checking" && (
-                          <>
-                            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-                            <span className="text-blue-600 font-medium">
-                              Checking...
-                            </span>
-                          </>
-                        )}
-                        {serverStatus === "online" && (
-                          <>
-                            <CheckCircle className="w-5 h-5 text-green-500" />
-                            <span className="text-green-600 font-medium">
-                              Server Online
-                            </span>
-                          </>
-                        )}
-                        {serverStatus === "offline" && (
-                          <>
-                            <XCircle className="w-5 h-5 text-red-500" />
-                            <span className="text-red-600 font-medium">
-                              Server Offline
-                            </span>
-                          </>
-                        )}
-                        {serverStatus === null && (
-                          <>
-                            <div className="w-5 h-5 rounded-full bg-gray-300" />
-                            <span className="text-gray-600 font-medium">
-                              Not Checked
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      {lastChecked && (
-                        <span className="text-sm text-gray-500">
-                          Last checked: {lastChecked.toLocaleTimeString()}
-                        </span>
-                      )}
-                    </div>
-                    <Button
-                      onClick={checkServerHealth}
-                      disabled={serverStatus === "checking"}
-                      className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
-                    >
-                      <RefreshCw
-                        className={`w-4 h-4 mr-2 ${
-                          serverStatus === "checking" ? "animate-spin" : ""
-                        }`}
-                      />
-                      Check Server Health
-                    </Button>
-                  </div>
-                  <div className="mt-4 text-sm text-gray-600">
-                    <p>
-                      This will test the connection to the backend server at{" "}
-                      <code className="bg-gray-200 px-2 py-1 rounded">
-                        http://localhost:6767/api/users/health
-                      </code>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Algorithms Health Check removed */}
-
-                {/* Test Data Import Section */}
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    Test Data Management
-                  </h2>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium text-gray-900">
-                          Import Test Users
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          Import sample users (Marcus, Sophia, Alex, Maya,
-                          Jordan) into the database
-                        </p>
-                      </div>
-                      <Button
-                        onClick={importTestUsers}
-                        disabled={isImportingUsers}
-                        className="bg-green-500 hover:bg-green-600 text-white disabled:opacity-50"
-                      >
-                        {isImportingUsers ? (
-                          <div className="flex items-center">
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Importing...
-                          </div>
-                        ) : (
-                          <div className="flex items-center">
-                            <Upload className="w-4 h-4 mr-2" />
-                            Import Test Users
-                          </div>
-                        )}
-                      </Button>
-                    </div>
-
-                    {/* Import Status */}
-                    {importStatus && (
-                      <div
-                        className={`p-3 rounded-lg text-sm ${
-                          importStatus.includes("complete")
-                            ? "bg-green-100 text-green-700 border border-green-200"
-                            : importStatus.includes("failed")
-                            ? "bg-red-100 text-red-700 border border-red-200"
-                            : "bg-blue-100 text-blue-700 border border-blue-200"
-                        }`}
-                      >
-                        {importStatus}
-                      </div>
-                    )}
-
-                    <div className="text-xs text-gray-400">
-                      <p>
-                        • Test users will be created with NetIDs: marcus01,
-                        sophia02, alex03, maya04, jordan05
-                      </p>
-                      <p>
-                        • All test users have password: &quot;password123&quot;
-                      </p>
-                      <p>• If users already exist, they will be skipped</p>
-                    </div>
-
-                    {useBackendData ? (
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                        <div>
-                          <h3 className="font-medium text-gray-900">
-                            Switch to Static Data
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            Use the default static profile data instead of
-                            backend data
-                          </p>
-                        </div>
-                        <Button
-                          onClick={() => setUseBackendData(false)}
-                          className="bg-gray-500 hover:bg-gray-600 text-white"
-                        >
-                          <div className="flex items-center">
-                            <XCircle className="w-4 h-4 mr-2" />
-                            Use Static Data
-                          </div>
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                        <div>
-                          <h3 className="font-medium text-gray-900">
-                            Switch to Backend Data
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            Use users from the database (default)
-                          </p>
-                        </div>
-                        <Button
-                          onClick={() => {
-                            setUseBackendData(true);
-                            fetchUsersFromBackend();
-                          }}
-                          className="bg-blue-500 hover:bg-blue-600 text-white"
-                        >
-                          <div className="flex items-center">
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Use Backend Data
-                          </div>
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
           )}
 
           {activeTab === "Profile Edit" && (
