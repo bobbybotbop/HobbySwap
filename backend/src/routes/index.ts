@@ -18,6 +18,7 @@ import {
   searchHobbyTeachers,
   normalizeUserHobbies,
 } from "../controllers/matchingController";
+import { normalizeHobbies, matchUsers } from "../algorithms";
 
 const router = Router();
 
@@ -33,8 +34,7 @@ router.get("/health", (req: Request, res: Response) => {
 // Algorithms health check route
 router.get("/health/algorithms", async (req: Request, res: Response) => {
   try {
-    // Import the algorithms module dynamically to test it
-    const { normalizeHobbies, matchUsers } = await import("../algorithms");
+    console.log("🔍 Testing algorithms health check...");
 
     // Test basic functionality with sample data
     const testHobbies = ["guitar", "cooking"];
@@ -51,11 +51,17 @@ router.get("/health/algorithms", async (req: Request, res: Response) => {
       },
     ];
 
+    console.log("🤖 Testing normalizeHobbies function...");
     // Test normalizeHobbies function
     const normalizedHobbies = await normalizeHobbies(testHobbies);
+    console.log("✅ normalizeHobbies test completed");
 
+    console.log("🔍 Testing matchUsers function...");
     // Test matchUsers function
     const matches = await matchUsers(testUser, testUsers);
+    console.log("✅ matchUsers test completed");
+
+    console.log("🎉 All algorithm tests passed successfully");
 
     res.status(200).json({
       status: "OK",
@@ -76,7 +82,7 @@ router.get("/health/algorithms", async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error("Algorithms health check failed:", error);
+    console.error("❌ Algorithms health check failed:", error);
     res.status(500).json({
       status: "ERROR",
       message: "Algorithms module health check failed",
