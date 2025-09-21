@@ -89,6 +89,12 @@ export default function MatchesList({
 
   // Convert semantic match to Profile format
   const convertMatchToProfile = (match: SemanticMatch): Profile => {
+    console.log("🔍 Converting match to profile:", {
+      matchUser: match.user,
+      hobbies: match.user.hobbies,
+      hobbiesWantToLearn: match.user.hobbiesWantToLearn,
+    });
+
     return {
       id: match.user._id,
       name: match.user.personalInformation.name,
@@ -96,8 +102,8 @@ export default function MatchesList({
       image:
         match.user.personalInformation.image ||
         "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
-      hobbiesKnown: match.transferableHobbies,
-      hobbiesWantToLearn: [], // Semantic matches focus on what they can teach you
+      hobbiesKnown: match.user.hobbies || [],
+      hobbiesWantToLearn: match.user.hobbiesWantToLearn || [],
       netID: match.user.personalInformation.netid,
       bio:
         match.user.personalInformation.bio ||
@@ -170,7 +176,7 @@ export default function MatchesList({
       </div>
 
       {/* Semantic Analysis Info */}
-      {semanticAnalysis && (
+      {/* {semanticAnalysis && (
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
           <div className="flex items-center mb-2">
             <h3 className="font-medium text-purple-900">Semantic Analysis</h3>
@@ -196,7 +202,7 @@ export default function MatchesList({
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -220,7 +226,7 @@ export default function MatchesList({
                 {/* Transferable Skills Info */}
                 <div className="mt-2 p-2 bg-purple-50 rounded text-xs">
                   <div className="font-medium text-purple-900 mb-1">
-                    Transferable Skills:
+                    Matched Hobbies:
                   </div>
                   <div className="text-purple-700">
                     {match.transferableHobbies.join(", ")}

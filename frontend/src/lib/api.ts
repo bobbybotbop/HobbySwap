@@ -37,6 +37,8 @@ export interface SemanticMatch {
       netid: string;
       instagram?: string;
     };
+    hobbies: string[];
+    hobbiesWantToLearn: string[];
   };
   transferableHobbies: string[];
   explanation: string;

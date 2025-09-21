@@ -659,6 +659,8 @@ interface HobbyMatch {
       netid: string;
       instagram?: string;
     };
+    hobbies: string[];
+    hobbiesWantToLearn: string[];
   };
   transferableHobbies: string[];
   explanation: string;
@@ -723,7 +725,9 @@ export const getAIMatches = async (
             _id: (user._id as any)?.toString() || "",
             name: user.personalInformation.name,
             personalInformation: user.personalInformation,
-          },
+            hobbies: userHobbies,
+            hobbiesWantToLearn: userWantsToLearn,
+          } as HobbyMatch["user"],
           transferableHobbies: semanticMatches.matchingHobbies,
           explanation: semanticMatches.explanation,
           matchScore: semanticMatches.score,
