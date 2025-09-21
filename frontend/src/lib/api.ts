@@ -159,13 +159,34 @@ class ApiService {
 
   // Get hobby matches for a user
   async getUserMatches(userId: string): Promise<MatchResponse> {
-    const response = await fetch(`${API_BASE_URL}/${userId}/matches`);
+    console.log("🌐 API: getUserMatches - Starting request");
+    console.log("📝 API: getUserMatches - User ID:", userId);
+    console.log(
+      "🔗 API: getUserMatches - URL:",
+      `${API_BASE_URL}/${userId}/matches`
+    );
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch user matches");
+    try {
+      const response = await fetch(`${API_BASE_URL}/${userId}/matches`);
+
+      console.log("📊 API: getUserMatches - Response status:", response.status);
+      console.log("📊 API: getUserMatches - Response ok:", response.ok);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ API: getUserMatches - Error response:", errorText);
+        throw new Error(
+          `Failed to fetch user matches: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("✅ API: getUserMatches - Success, data:", data);
+      return data;
+    } catch (error: any) {
+      console.error("❌ API: getUserMatches - Error:", error);
+      throw error;
     }
-
-    return response.json();
   }
 
   // Search for users who can teach a specific hobby

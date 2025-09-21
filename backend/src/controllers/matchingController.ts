@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { User } from "../models/userModel";
-import { matchUsers, searchUsers, normalizeHobbies } from "../algorithms";
+import { matchUsers, searchUsers, normalizeHobbies } from "./userController";
 
 // GET matches for a specific user
 export const getUserMatches = async (
@@ -8,69 +8,134 @@ export const getUserMatches = async (
   res: Response
 ): Promise<void> => {
   try {
+    console.log("🚀 getUserMatches: Starting function");
     const { userId } = req.params;
+    console.log("📝 getUserMatches: Received userId:", userId);
 
+    // Validate userId
+    if (!userId) {
+      console.log("❌ getUserMatches: No userId provided");
+      res.status(400).json({ message: "User ID is required" });
+      return;
+    }
+
+    console.log("🔍 getUserMatches: Fetching current user from database...");
     // Get the current user
     const currentUser = await User.findById(userId).select(
       "-personalInformation.encryptedPassword"
     );
+
     if (!currentUser) {
+      console.log("❌ getUserMatches: User not found in database");
       res.status(404).json({ message: "User not found" });
       return;
     }
 
+    console.log("✅ getUserMatches: Current user found:", {
+      id: currentUser._id,
+      name: currentUser.personalInformation.name,
+      hobbiesCount: currentUser.hobbies?.length || 0,
+      hobbiesWantCount: currentUser.hobbiesWantToLearn?.length || 0,
+    });
+
+    console.log("🔍 getUserMatches: Fetching all other users from database...");
     // Get all other users
     const allUsers = await User.find({ _id: { $ne: userId } }).select(
       "-personalInformation.encryptedPassword"
     );
 
+    console.log("✅ getUserMatches: Found", allUsers.length, "other users");
+
     // Transform data to match algorithm expectations
+    console.log("🔄 getUserMatches: Transforming current user data...");
     const currentUserForMatching = {
       _id: currentUser._id,
-      hobbiesKnow: currentUser.hobbies.map((hobby: string) => ({
-        name: hobby,
-      })),
-      hobbiesWant: currentUser.hobbiesWantToLearn.map((hobby: string) => ({
-        name: hobby,
-      })),
+      hobbiesKnow:
+        currentUser.hobbies?.map((hobby: string) => ({
+          name: hobby,
+        })) || [],
+      hobbiesWant:
+        currentUser.hobbiesWantToLearn?.map((hobby: string) => ({
+          name: hobby,
+        })) || [],
     };
 
+    console.log("📊 getUserMatches: Current user transformed:", {
+      id: currentUserForMatching._id,
+      hobbiesKnowCount: currentUserForMatching.hobbiesKnow.length,
+      hobbiesWantCount: currentUserForMatching.hobbiesWant.length,
+      hobbiesKnow: currentUserForMatching.hobbiesKnow.map((h) => h.name),
+      hobbiesWant: currentUserForMatching.hobbiesWant.map((h) => h.name),
+    });
+
+    console.log("🔄 getUserMatches: Transforming all users data...");
     const allUsersForMatching = allUsers.map((user) => ({
       _id: user._id,
       name: user.personalInformation.name,
-      hobbiesKnow: user.hobbies.map((hobby: string) => ({ name: hobby })),
-      hobbiesWant: user.hobbiesWantToLearn.map((hobby: string) => ({
-        name: hobby,
-      })),
+      hobbiesKnow:
+        user.hobbies?.map((hobby: string) => ({ name: hobby })) || [],
+      hobbiesWant:
+        user.hobbiesWantToLearn?.map((hobby: string) => ({
+          name: hobby,
+        })) || [],
       personalInformation: user.personalInformation,
     }));
 
     console.log(
-      "🔍 Finding matches for user:",
+      "📊 getUserMatches: All users transformed:",
+      allUsersForMatching.map((u) => ({
+        id: u._id,
+        name: u.name,
+        hobbiesKnowCount: u.hobbiesKnow.length,
+        hobbiesWantCount: u.hobbiesWant.length,
+      }))
+    );
+
+    console.log(
+      "🔍 getUserMatches: Finding matches for user:",
       currentUser.personalInformation.name
     );
     console.log(
-      "👥 Searching among",
+      "👥 getUserMatches: Searching among",
       allUsersForMatching.length,
       "other users"
     );
 
+    console.log("🤖 getUserMatches: Calling matchUsers algorithm...");
     // Get matches using the algorithm
     const matches = await matchUsers(
       currentUserForMatching,
       allUsersForMatching
     );
 
-    console.log(`✅ Found ${matches.length} matches`);
+    console.log(`✅ getUserMatches: Found ${matches.length} matches`);
+    console.log(
+      "📋 getUserMatches: Match details:",
+      matches.map((m) => ({
+        userId: m.user._id,
+        userName: m.user.name,
+        score: m.score,
+        theyKnowYouWant: m.theyKnowYouWant,
+        theyWantYouKnow: m.theyWantYouKnow,
+      }))
+    );
 
+    console.log("📤 getUserMatches: Sending response...");
     res.status(200).json({
       message: "Matches found successfully",
       matches: matches,
       totalMatches: matches.length,
     });
+
+    console.log("✅ getUserMatches: Function completed successfully");
   } catch (error: any) {
-    console.error("❌ Error finding matches:", error);
-    res.status(500).json({ message: error.message });
+    console.error("❌ getUserMatches: Error occurred:", error);
+    console.error("❌ getUserMatches: Error stack:", error.stack);
+    console.error("❌ getUserMatches: Error message:", error.message);
+    res.status(500).json({
+      message: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
   }
 };
 

@@ -18,7 +18,7 @@ import {
   searchHobbyTeachers,
   normalizeUserHobbies,
 } from "../controllers/matchingController";
-import { normalizeHobbies, matchUsers } from "../algorithms";
+import { normalizeHobbies, matchUsers } from "../controllers/userController";
 
 const router = Router();
 
@@ -183,5 +183,31 @@ router.get("/search-teachers", searchHobbyTeachers); // GET /api/users/search-te
 
 // POST routes for AI features
 router.post("/normalize-hobbies", normalizeUserHobbies); // POST /api/users/normalize-hobbies
+
+// Test OpenRouter API connection
+router.get("/test-openrouter", async (req: Request, res: Response) => {
+  try {
+    console.log("🧪 Testing OpenRouter API connection...");
+
+    const { normalizeHobbies } = await import("../controllers/userController");
+    const testHobbies = ["guitar", "cooking"];
+
+    console.log("📝 Testing with hobbies:", testHobbies);
+    const result = await normalizeHobbies(testHobbies);
+
+    console.log("✅ OpenRouter test successful:", result);
+    res.status(200).json({
+      message: "OpenRouter API test successful",
+      input: testHobbies,
+      output: result,
+    });
+  } catch (error: any) {
+    console.error("❌ OpenRouter test failed:", error);
+    res.status(500).json({
+      message: "OpenRouter API test failed",
+      error: error.message,
+    });
+  }
+});
 
 export default router;
