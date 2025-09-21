@@ -3,7 +3,7 @@ import { Profile } from "@/types/profile";
 
 // Example current user profile data
 const initialCurrentUser: Profile = {
-  id: 0,
+  id: "0",
   name: "John Doe",
   location: "West",
   image:

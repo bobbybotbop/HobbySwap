@@ -108,7 +108,7 @@ export default function LoginPage() {
 
         // Redirect to main page after successful login
         setTimeout(() => {
-          router.push("/?tab=For You");
+          router.push("/?tab=Search");
         }, 1000);
       } else {
         setError("Failed to retrieve user data");

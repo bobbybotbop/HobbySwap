@@ -287,11 +287,22 @@ export const updateUserPersonalInformation = async (
     const { id } = req.params;
     const { personalInformation } = req.body;
 
+    // Use $set with dot notation to update specific fields without replacing the entire object
+    const updateFields: any = {};
+    Object.keys(personalInformation).forEach((key) => {
+      updateFields[`personalInformation.${key}`] = personalInformation[key];
+    });
+
     const updatedUser = await User.findByIdAndUpdate(
       id,
-      { personalInformation: personalInformation },
+      { $set: updateFields },
       { new: true }
     ).select("-personalInformation.encryptedPassword");
+
+    if (!updatedUser) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
 
     res.status(200).json("Successfully updated personal information");
   } catch (error: any) {

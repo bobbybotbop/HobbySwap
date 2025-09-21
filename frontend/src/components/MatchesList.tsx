@@ -3,28 +3,29 @@
 import { useState, useEffect } from "react";
 import { apiService, Match } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Search,
   Loader2,
   Users,
   Star,
   ArrowRight,
   RefreshCw,
+  Filter,
+  SortAsc,
 } from "lucide-react";
 
 interface MatchesListProps {
   userId: string;
   onUserSelect?: (user: {
+    _id: string;
+    name: string;
     personalInformation: {
       name: string;
-      location?: string;
       image?: string;
+      location?: string;
+      bio?: string;
       netid: string;
       instagram?: string;
     };
-    hobbies?: string[];
-    hobbiesWantToLearn?: string[];
   }) => void;
 }
 
@@ -34,10 +35,7 @@ export default function MatchesList({
 }: MatchesListProps) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchHobby, setSearchHobby] = useState("");
-  const [searchResults, setSearchResults] = useState<Match[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"all" | "search">("all");
+  const [sortBy, setSortBy] = useState<"score" | "name">("score");
 
   // Fetch all matches
   const fetchMatches = async () => {
@@ -54,25 +52,6 @@ export default function MatchesList({
     }
   };
 
-  // Search for specific hobby teachers
-  const searchHobbyTeachers = async () => {
-    if (!userId || !searchHobby.trim()) return;
-
-    setSearchLoading(true);
-    try {
-      const response = await apiService.searchHobbyTeachers(
-        userId,
-        searchHobby
-      );
-      setSearchResults(response.matches);
-      setActiveTab("search");
-    } catch (error) {
-      console.error("Error searching hobby teachers:", error);
-    } finally {
-      setSearchLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchMatches();
   }, [userId]);
@@ -83,6 +62,17 @@ export default function MatchesList({
     }
   };
 
+  // Sort matches based on current sort option
+  const sortedMatches = [...matches].sort((a, b) => {
+    if (sortBy === "score") {
+      return b.score - a.score; // Highest score first
+    } else {
+      return a.user.personalInformation.name.localeCompare(
+        b.user.personalInformation.name
+      );
+    }
+  });
+
   const renderMatchCard = (match: Match, index: number) => (
     <div
       key={`${match.user._id}-${index}`}
@@ -91,9 +81,17 @@ export default function MatchesList({
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-            {match.user.personalInformation.name.charAt(0).toUpperCase()}
-          </div>
+          {match.user.personalInformation.image ? (
+            <img
+              src={match.user.personalInformation.image}
+              alt={match.user.personalInformation.name}
+              className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+            />
+          ) : (
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+              {match.user.personalInformation.name.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div>
             <h3 className="font-semibold text-gray-900">
               {match.user.personalInformation.name}
@@ -107,6 +105,10 @@ export default function MatchesList({
         <div className="flex items-center space-x-1 text-yellow-500">
           <Star className="w-4 h-4 fill-current" />
           <span className="font-semibold">{match.score}</span>
+          <span className="text-xs text-gray-500 ml-1">
+            ({match.theyKnowYouWant.length + match.theyWantYouKnow.length}{" "}
+            shared)
+          </span>
         </div>
       </div>
 
@@ -177,106 +179,61 @@ export default function MatchesList({
           <p className="text-gray-600 mt-1">
             Find people who can teach you new skills and learn from you
           </p>
+          {matches.length > 0 && (
+            <p className="text-sm text-gray-500 mt-1">
+              {matches.length} {matches.length === 1 ? "match" : "matches"}{" "}
+              found
+            </p>
+          )}
         </div>
-        <Button
-          variant="outline"
-          onClick={fetchMatches}
-          disabled={loading}
-          className="flex items-center"
-        >
-          <RefreshCw
-            className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
-          />
-          Refresh
-        </Button>
-      </div>
-
-      {/* Search Section */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-3">
-          Search for specific hobby teachers
-        </h3>
-        <div className="flex space-x-2">
-          <Input
-            placeholder="Enter a hobby (e.g., guitar, cooking, photography)"
-            value={searchHobby}
-            onChange={(e) => setSearchHobby(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && searchHobbyTeachers()}
-            className="flex-1"
-          />
+        <div className="flex items-center space-x-2">
           <Button
-            onClick={searchHobbyTeachers}
-            disabled={searchLoading || !searchHobby.trim()}
+            variant="outline"
+            size="sm"
+            onClick={() => setSortBy(sortBy === "score" ? "name" : "score")}
             className="flex items-center"
           >
-            {searchLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Search className="w-4 h-4" />
-            )}
+            <SortAsc className="w-4 h-4 mr-2" />
+            Sort by {sortBy === "score" ? "Name" : "Score"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={fetchMatches}
+            disabled={loading}
+            className="flex items-center"
+          >
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
+            Refresh
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-        <button
-          onClick={() => setActiveTab("all")}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "all"
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
-        >
-          All Matches ({matches.length})
-        </button>
-        <button
-          onClick={() => setActiveTab("search")}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "search"
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
-        >
-          Search Results ({searchResults.length})
-        </button>
-      </div>
-
-      {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
           <span className="ml-2 text-gray-600">Finding your matches...</span>
         </div>
-      ) : activeTab === "all" ? (
-        matches.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {matches.map((match, index) => renderMatchCard(match, index))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No matches found
-            </h3>
-            <p className="text-gray-600">
-              Try updating your hobbies or check back later for new users.
-            </p>
-          </div>
-        )
-      ) : searchResults.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {searchResults.map((match, index) => renderMatchCard(match, index))}
+      ) : matches.length > 0 ? (
+        <div className="flex flex-wrap gap-4">
+          {sortedMatches.map((match, index) => (
+            <div
+              key={`${match.user._id}-${index}`}
+              className="w-full md:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.67rem)]"
+            >
+              {renderMatchCard(match, index)}
+            </div>
+          ))}
         </div>
       ) : (
         <div className="text-center py-12">
-          <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No teachers found
+            No matches found
           </h3>
           <p className="text-gray-600">
-            No one can teach &quot;{searchHobby}&quot; yet. Try a different
-            hobby or check back later.
+            Try updating your hobbies or check back later for new users.
           </p>
         </div>
       )}

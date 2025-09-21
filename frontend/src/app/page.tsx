@@ -28,7 +28,13 @@ import {
   Search,
   Users,
 } from "lucide-react";
-import { SmileSquare, Star, CogFour, Send, Inbox } from "@mynaui/icons-react";
+import {
+  Search as SearchIcon,
+  Star,
+  CogFour,
+  Send,
+  Inbox,
+} from "@mynaui/icons-react";
 import ProfileCard from "@/components/ProfileCard";
 import MatchesList from "@/components/MatchesList";
 import ProfileModal from "@/components/ProfileModal";
@@ -120,7 +126,7 @@ const profilesData = [
 
 // Generate profiles with IDs based on index
 const profiles: Profile[] = profilesData.map((profile, index) => ({
-  id: index + 1,
+  id: (index + 1).toString(),
   netID: `user${index + 1}`,
   email: `${profile.name.toLowerCase().replace(" ", ".")}@example.com`,
   ...profile,
@@ -128,7 +134,7 @@ const profiles: Profile[] = profilesData.map((profile, index) => ({
 
 export default function Home() {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState("For You");
+  const [activeTab, setActiveTab] = useState("Search");
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const [age, setAge] = useState("");
@@ -179,7 +185,7 @@ export default function Home() {
         if (tabParam) {
           setActiveTab(tabParam);
         } else {
-          setActiveTab("For You");
+          setActiveTab("Search");
         }
       } catch (error) {
         console.error("❌ Error parsing stored user data:", error);
@@ -189,6 +195,7 @@ export default function Home() {
 
   // Function to convert backend user to Profile format
   const convertBackendUserToProfile = (user: {
+    _id: string;
     personalInformation: {
       name: string;
       location?: string;
@@ -200,7 +207,7 @@ export default function Home() {
     hobbiesWantToLearn?: string[];
   }): Profile => {
     return {
-      id: 0, // Will be set to 0 for current user
+      id: user._id, // Use MongoDB _id
       name: user.personalInformation.name,
       location: user.personalInformation.location || "Not specified",
       image:
@@ -220,7 +227,7 @@ export default function Home() {
     const user = backendProfiles.find((profile) => profile.netID === netid);
     if (user) {
       replaceCurrentUser(user);
-      setActiveTab("For You");
+      setActiveTab("Search");
     }
   };
 
@@ -308,7 +315,7 @@ export default function Home() {
       await apiService.updatePersonalInformation(userId, {
         personalInformation: {
           name: currentUser.name,
-          email: currentUser.email,
+          netid: currentUser.netID,
           location: currentUser.location,
           instagram: currentUser.instagram,
           bio: currentUser.bio,
@@ -380,6 +387,7 @@ export default function Home() {
         const convertedProfiles: Profile[] = backendUsers.map(
           (
             user: {
+              _id: string;
               personalInformation: {
                 name: string;
                 location?: string;
@@ -395,6 +403,7 @@ export default function Home() {
             console.log(`🔄 Converting user ${index + 1}:`);
             console.log(`   📝 Name: ${user.personalInformation.name}`);
             console.log(`   🆔 NetID: ${user.personalInformation.netid}`);
+            console.log(`   🆔 MongoDB ID: ${user._id}`);
             console.log(
               `   🖼️ Original Image: ${
                 user.personalInformation.image || "NO IMAGE"
@@ -407,7 +416,7 @@ export default function Home() {
             );
 
             const profile = {
-              id: index + 1,
+              id: user._id,
               name: user.personalInformation.name,
               location: user.personalInformation.location || "Not specified",
               image:
@@ -662,8 +671,8 @@ export default function Home() {
           <ul className="space-y-2">
             {[
               {
-                name: "For You",
-                icon: <SmileSquare className="w-5 h-5" />,
+                name: "Search",
+                icon: <SearchIcon className="w-5 h-5" />,
               },
               { name: "Matches", icon: <Users className="w-5 h-5" /> },
               { name: "Sent", icon: <Send className="w-5 h-5" /> },
@@ -839,7 +848,7 @@ export default function Home() {
               : "pt-2"
           }`}
         >
-          {activeTab === "For You" && (
+          {activeTab === "Search" && (
             <div className="grid grid-cols-3 gap-6">
               {filterProfiles(useBackendData ? backendProfiles : profiles).map(
                 (profile) => (
@@ -851,7 +860,7 @@ export default function Home() {
 
           {activeTab === "Matches" && (
             <MatchesList
-              userId={currentUser.id.toString()}
+              userId={currentUser.id}
               onUserSelect={(user) => {
                 // Convert backend user to profile format and show in modal
                 const profile = convertBackendUserToProfile(user);
@@ -872,7 +881,7 @@ export default function Home() {
                   Start adding profiles to your favorites to see them here
                 </p>
                 <Button
-                  onClick={() => setActiveTab("For You")}
+                  onClick={() => setActiveTab("Search")}
                   className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
                 >
                   Browse Profiles
@@ -892,7 +901,7 @@ export default function Home() {
                   Start sending hobby swap requests to see them here
                 </p>
                 <Button
-                  onClick={() => setActiveTab("For You")}
+                  onClick={() => setActiveTab("Search")}
                   className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
                 >
                   Browse Profiles
@@ -912,7 +921,7 @@ export default function Home() {
                   Requests from other users will appear here
                 </p>
                 <Button
-                  onClick={() => setActiveTab("For You")}
+                  onClick={() => setActiveTab("Search")}
                   className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
                 >
                   Browse Profiles

@@ -3,7 +3,7 @@ const API_BASE_URL = "http://localhost:6767/api/users";
 export interface UpdatePersonalInfoRequest {
   personalInformation: {
     name: string;
-    email: string;
+    netid: string;
     location?: string;
     instagram?: string;
     bio?: string;
@@ -34,6 +34,8 @@ export interface Match {
       image?: string;
       location?: string;
       bio?: string;
+      netid: string;
+      instagram?: string;
     };
   };
   score: number;
@@ -158,29 +160,36 @@ class ApiService {
   // Get hobby matches for a user
   async getUserMatches(userId: string): Promise<MatchResponse> {
     const response = await fetch(`${API_BASE_URL}/${userId}/matches`);
-    
+
     if (!response.ok) {
       throw new Error("Failed to fetch user matches");
     }
-    
+
     return response.json();
   }
 
   // Search for users who can teach a specific hobby
-  async searchHobbyTeachers(userId: string, hobby: string): Promise<HobbySearchResponse> {
+  async searchHobbyTeachers(
+    userId: string,
+    hobby: string
+  ): Promise<HobbySearchResponse> {
     const response = await fetch(
-      `${API_BASE_URL}/search-teachers?userId=${userId}&hobby=${encodeURIComponent(hobby)}`
+      `${API_BASE_URL}/search-teachers?userId=${userId}&hobby=${encodeURIComponent(
+        hobby
+      )}`
     );
-    
+
     if (!response.ok) {
       throw new Error("Failed to search hobby teachers");
     }
-    
+
     return response.json();
   }
 
   // Normalize hobby names using AI
-  async normalizeHobbies(data: NormalizeHobbiesRequest): Promise<NormalizeHobbiesResponse> {
+  async normalizeHobbies(
+    data: NormalizeHobbiesRequest
+  ): Promise<NormalizeHobbiesResponse> {
     const response = await fetch(`${API_BASE_URL}/normalize-hobbies`, {
       method: "POST",
       headers: {

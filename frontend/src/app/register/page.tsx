@@ -166,7 +166,7 @@ export default function RegisterPage() {
 
         // Redirect to main page after successful registration
         setTimeout(() => {
-          router.push("/?tab=For You");
+          router.push("/?tab=Search");
         }, 2000);
       } else {
         setError(data.message || "Registration failed");
