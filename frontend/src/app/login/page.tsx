@@ -99,9 +99,6 @@ export default function LoginPage() {
           bio: `Hi! I'm ${userData.personalInformation.name} and I love sharing hobbies!`,
           instagram: userData.personalInformation.instagram || "",
           email: `${userData.personalInformation.netid}@example.com`,
-          socialMedia: {
-            instagram: userData.personalInformation.instagram || "",
-          },
         };
 
         // Store user data in localStorage

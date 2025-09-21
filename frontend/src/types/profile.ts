@@ -6,10 +6,7 @@ export interface Profile {
   hobbiesKnown: string[];
   hobbiesWantToLearn: string[];
   netID: string;
-  bio: string;  
+  bio: string;
   instagram: string;
   email: string;
-  socialMedia: {
-    instagram: string;
-  };
 }

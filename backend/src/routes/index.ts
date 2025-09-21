@@ -11,6 +11,8 @@ import {
   updateUserHobbies,
   updateUserHobbiesWant,
 } from "../controllers/userController";
+import { uploadProfileImage } from "../controllers/imageController";
+import { upload } from "../services/imageService";
 
 const router = Router();
 
@@ -83,5 +85,8 @@ router.patch("/password", updatePassword); // PATCH /api/users/password
 router.patch("/:id", updateUserPersonalInformation); // PATCH /api/users/123 (general update)
 router.patch("/updateHobbies/:id", updateUserHobbies);
 router.patch("/updateHobbiesToLearn/:id", updateUserHobbiesWant);
+
+// POST routes for file uploads
+router.post("/upload-image", upload.single("image"), uploadProfileImage); // POST /api/users/upload-image
 
 export default router;

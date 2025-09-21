@@ -151,6 +151,21 @@ The frontend is configured with:
 - Tailwind CSS with default configuration
 - ESLint with Next.js recommended rules
 
+### ImgBB API Configuration
+
+For profile picture uploads, you'll need to set up an ImgBB API key:
+
+1. **Get your API key** from [https://api.imgbb.com/](https://api.imgbb.com/)
+2. **Create a `.env.local` file** in the `frontend` directory:
+
+```env
+NEXT_PUBLIC_IMGBB_API_KEY=your_imgbb_api_key_here
+```
+
+3. **Replace `your_imgbb_api_key_here`** with your actual API key
+
+**Note:** ImgBB supports images up to 32MB, but the app limits uploads to 10MB for better user experience.
+
 ## 📝 API Endpoints
 
 ### Health Check

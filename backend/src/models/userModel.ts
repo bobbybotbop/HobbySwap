@@ -15,6 +15,7 @@ export interface IUser extends Document {
     location?: string;
     age: string;
     instagram?: string;
+    bio?: string;
     encryptedPassword: string;
   };
   hobbies: string[];
@@ -40,6 +41,7 @@ const UserSchema: Schema<IUser> = new Schema(
       location: { type: String, required: false },
       age: { type: String, required: true },
       instagram: { type: String, required: false },
+      bio: { type: String, required: false },
       encryptedPassword: { type: String, required: false },
     },
     hobbies: [{ type: String }],

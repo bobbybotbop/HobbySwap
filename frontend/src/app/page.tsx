@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { apiService } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -27,6 +28,7 @@ import {
   CheckCircle,
   XCircle,
   RefreshCw,
+  Search,
 } from "lucide-react";
 import { SmileSquare, Star, CogFour, Send, Inbox } from "@mynaui/icons-react";
 import ProfileCard from "@/components/ProfileCard";
@@ -121,15 +123,13 @@ const profiles: Profile[] = profilesData.map((profile, index) => ({
   id: index + 1,
   netID: `user${index + 1}`,
   email: `${profile.name.toLowerCase().replace(" ", ".")}@example.com`,
-  socialMedia: {
-    instagram: profile.instagram,
-  },
   ...profile,
 }));
 
 export default function Home() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("For You");
+  const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const [age, setAge] = useState("");
   const [hobby, setHobby] = useState("");
@@ -150,6 +150,11 @@ export default function Home() {
   const [importStatus, setImportStatus] = useState<string>("");
   const [backendProfiles, setBackendProfiles] = useState<Profile[]>([]);
   const [useBackendData, setUseBackendData] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">(
+    "idle"
+  );
+  const [saveMessage, setSaveMessage] = useState("");
 
   // Automatically load backend users on component mount
   useEffect(() => {
@@ -195,9 +200,6 @@ export default function Home() {
       bio: `Hi! I'm ${user.personalInformation.name} and I love sharing hobbies!`,
       instagram: user.personalInformation.instagram || "",
       email: `${user.personalInformation.netid}@example.com`,
-      socialMedia: {
-        instagram: user.personalInformation.instagram || "",
-      },
     };
   };
 
@@ -239,32 +241,33 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
+    // Basic validation
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file");
+      alert("Please select a valid image file");
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+    // Check file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      alert("Image size must be less than 10MB");
       return;
     }
 
     setIsUploading(true);
 
     try {
-      // Create a preview URL for immediate display
-      const imageUrl = URL.createObjectURL(file);
+      console.log("📤 Uploading profile image to backend...");
 
-      // Update the user profile with the new image
+      // Upload to backend (which handles ImgBB upload)
+      const imageUrl = await apiService.uploadImage(file);
+
+      // Update the user profile with the new image URL
       updateCurrentUser({ image: imageUrl });
 
-      // In a real app, you would upload the file to a server here
-      // For now, we'll simulate a brief delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("✅ Profile image uploaded successfully:", imageUrl);
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("❌ Error uploading image:", error);
       alert("Failed to upload image. Please try again.");
     } finally {
       setIsUploading(false);
@@ -277,6 +280,61 @@ export default function Home() {
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    setSaveStatus("idle");
+    setSaveMessage("");
+
+    try {
+      // Get user ID by netID from backend
+      const backendUser = await apiService.getUserByNetId(currentUser.netID);
+      const userId = backendUser._id;
+
+      // Update personal information
+      await apiService.updatePersonalInformation(userId, {
+        personalInformation: {
+          name: currentUser.name,
+          email: currentUser.email,
+          location: currentUser.location,
+          instagram: currentUser.instagram,
+          bio: currentUser.bio,
+          image: currentUser.image,
+        },
+      });
+
+      // Update hobbies
+      await apiService.updateHobbies(userId, {
+        hobbies: currentUser.hobbiesKnown,
+      });
+
+      // Update hobbies want to learn
+      await apiService.updateHobbiesWantToLearn(userId, {
+        hobbiesWantToLearn: currentUser.hobbiesWantToLearn,
+      });
+
+      setSaveStatus("success");
+      setSaveMessage("Profile updated successfully!");
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSaveStatus("idle");
+        setSaveMessage("");
+      }, 3000);
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+      setSaveStatus("error");
+      setSaveMessage("Failed to save profile. Please try again.");
+
+      // Clear error message after 5 seconds
+      setTimeout(() => {
+        setSaveStatus("idle");
+        setSaveMessage("");
+      }, 5000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const checkServerHealth = async () => {
@@ -336,9 +394,6 @@ export default function Home() {
               bio: `Hi! I'm ${user.personalInformation.name} and I love sharing hobbies!`,
               instagram: user.personalInformation.instagram || "",
               email: `${user.personalInformation.netid}@example.com`,
-              socialMedia: {
-                instagram: user.personalInformation.instagram || "",
-              },
             };
 
             console.log(`   🖼️ Final Image: ${profile.image}`);
@@ -512,6 +567,25 @@ export default function Home() {
     }
   };
 
+  // Filter profiles based on search query
+  const filterProfiles = (profiles: Profile[]) => {
+    if (!searchQuery.trim()) return profiles;
+
+    const query = searchQuery.toLowerCase();
+    return profiles.filter(
+      (profile) =>
+        profile.name.toLowerCase().includes(query) ||
+        profile.bio.toLowerCase().includes(query) ||
+        profile.hobbiesKnown.some((hobby) =>
+          hobby.toLowerCase().includes(query)
+        ) ||
+        profile.hobbiesWantToLearn.some((hobby) =>
+          hobby.toLowerCase().includes(query)
+        ) ||
+        profile.location.toLowerCase().includes(query)
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-purple-100 flex">
       {/* Left Sidebar */}
@@ -593,8 +667,23 @@ export default function Home() {
       <div className="flex-1 flex flex-col">
         {/* Top Header - Hidden for Profile Edit and Settings tabs */}
         {activeTab !== "Profile Edit" && activeTab !== "Settings" && (
-          <div className=" px-6 py-4 flex items-center justify-end">
-            <div className="mt-4 flex items-center space-x-3 text-black">
+          <div className="px-6 py-4 flex items-center justify-between">
+            {/* Search Bar */}
+            <div className="flex-1 mr-6">
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search profiles, hobbies, locations..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent bg-white shadow-sm"
+                />
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="flex items-center space-x-3 text-black">
               {/* Location Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -726,9 +815,11 @@ export default function Home() {
         >
           {activeTab === "For You" && (
             <div className="grid grid-cols-3 gap-6">
-              {(useBackendData ? backendProfiles : profiles).map((profile) => (
-                <ProfileCard key={profile.id} profile={profile} />
-              ))}
+              {filterProfiles(useBackendData ? backendProfiles : profiles).map(
+                (profile) => (
+                  <ProfileCard key={profile.id} profile={profile} />
+                )
+              )}
             </div>
           )}
 
@@ -1297,13 +1388,10 @@ export default function Home() {
                       <input
                         type="url"
                         placeholder="Instagram URL"
-                        value={currentUser.socialMedia.instagram}
+                        value={currentUser.instagram}
                         onChange={(e) =>
                           updateCurrentUser({
-                            socialMedia: {
-                              ...currentUser.socialMedia,
-                              instagram: e.target.value,
-                            },
+                            instagram: e.target.value,
                           })
                         }
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1311,6 +1399,41 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Save Button and Status */}
+              <div className="mt-8 flex flex-col items-center space-y-4">
+                {saveMessage && (
+                  <div
+                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      saveStatus === "success"
+                        ? "bg-green-100 text-green-800 border border-green-200"
+                        : saveStatus === "error"
+                        ? "bg-red-100 text-red-800 border border-red-200"
+                        : "bg-blue-100 text-blue-800 border border-blue-200"
+                    }`}
+                  >
+                    {saveMessage}
+                  </div>
+                )}
+
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={isSaving}
+                  className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Save Profile
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           )}

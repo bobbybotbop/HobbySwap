@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { User, Lock, Mail, Eye, EyeOff, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Profile } from "@/types/profile";
+import { apiService } from "@/lib/api";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -37,15 +38,16 @@ export default function RegisterPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
+    // Basic validation
     if (!file.type.startsWith("image/")) {
       setError("Please select a valid image file");
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Image size must be less than 5MB");
+    // Check file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      setError("Image size must be less than 10MB");
       return;
     }
 
@@ -53,16 +55,18 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      // For now, we'll use a placeholder image URL
-      // In a real app, you'd upload to a cloud service like AWS S3, Cloudinary, etc.
-      const imageUrl = URL.createObjectURL(file);
+      console.log("📤 Uploading image to backend...");
+      const imageUrl = await apiService.uploadImage(file);
+
       setFormData((prev) => ({
         ...prev,
         image: imageUrl,
       }));
+
+      console.log("✅ Image uploaded successfully:", imageUrl);
     } catch (error) {
-      console.error("Error processing image:", error);
-      setError("Failed to process image. Please try again.");
+      console.error("❌ Error uploading image:", error);
+      setError("Failed to upload image. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -154,9 +158,6 @@ export default function RegisterPage() {
           bio: `Hi! I'm ${formData.username.trim()} and I love sharing hobbies!`,
           instagram: "",
           email: `${formData.netid.trim()}@example.com`,
-          socialMedia: {
-            instagram: "",
-          },
         };
 
         // Store user data in localStorage

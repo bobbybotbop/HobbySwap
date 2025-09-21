@@ -14,9 +14,6 @@ const initialCurrentUser: Profile = {
   bio: "hi!! i want to learn more hobbies because I love entertainment!!!!!!",
   instagram: "https://instagram.com/johndoe",
   email: "john.doe@example.com",
-  socialMedia: {
-    instagram: "https://instagram.com/johndoe",
-  },
 };
 
 export const useCurrentUser = () => {
