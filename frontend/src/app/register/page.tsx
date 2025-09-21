@@ -146,7 +146,7 @@ export default function RegisterPage() {
 
         // Create user profile from registration data
         const userProfile: Profile = {
-          id: 0,
+          id: "68cf6cddb67d9ed6afd18539", // Use existing backend user ID
           name: formData.username.trim(),
           location: "Not specified", // Will be updated when user edits profile
           image:

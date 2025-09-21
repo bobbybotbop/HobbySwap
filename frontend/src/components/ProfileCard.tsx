@@ -2,13 +2,17 @@ import React, { useState } from "react";
 import { MapPin, Star, BookOpen, ArrowRight } from "lucide-react";
 import { Profile } from "@/types/profile";
 import ProfileModal from "./ProfileModal";
+import SwapModal from "./SwapModal";
 
 interface ProfileCardProps {
   profile: Profile;
+  currentUserId?: string;
+  onSwapRequest?: (swapData: { receiverId: string; selectedDate: string; selectedTime: string; duration: number; message: string; location: string }) => Promise<void>;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUserId, onSwapRequest }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 w-full max-w-md border border-gray-100 overflow-hidden">
       {/* Full Width Image with Overlay */}
@@ -92,7 +96,17 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
           >
             More info
           </button>
-          <button className="flex items-center space-x-1.5 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+          <button 
+            onClick={() => {
+              // Check if user is trying to swap with themselves
+              if (currentUserId && (profile.id === currentUserId || profile.id.toString() === currentUserId.toString())) {
+                alert("You can't swap with yourself! Try finding someone else to exchange hobbies with.");
+                return;
+              }
+              setIsSwapModalOpen(true);
+            }}
+            className="flex items-center space-x-1.5 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+          >
             <span>Swap</span>
             <ArrowRight className="w-4 h-4" />
           </button>
@@ -104,6 +118,15 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
         profile={profile}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      {/* Swap Modal */}
+      <SwapModal
+        profile={profile}
+        currentUserId={currentUserId}
+        isOpen={isSwapModalOpen}
+        onClose={() => setIsSwapModalOpen(false)}
+        onConfirmSwap={onSwapRequest || (async () => {})}
       />
     </div>
   );

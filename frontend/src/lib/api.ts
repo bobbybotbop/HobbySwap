@@ -67,6 +67,64 @@ export interface NormalizeHobbiesResponse {
   }>;
 }
 
+export interface SwapRequest {
+  _id: string;
+  senderId: string | {
+    _id: string;
+    personalInformation: {
+      name: string;
+      image?: string;
+      location?: string;
+    };
+  };
+  receiverId: string | {
+    _id: string;
+    personalInformation: {
+      name: string;
+      image?: string;
+      location?: string;
+    };
+  };
+  selectedDate: string;
+  selectedTime: string;
+  duration: number;
+  message: string;
+  location: string;
+  status: 'pending' | 'accepted' | 'declined' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SendSwapRequestRequest {
+  senderId: string;
+  receiverId: string;
+  selectedDate: string;
+  selectedTime: string;
+  duration: number;
+  message: string;
+  location: string;
+}
+
+export interface SendSwapRequestResponse {
+  message: string;
+  swapRequest: SwapRequest;
+}
+
+export interface GetSwapRequestsResponse {
+  message: string;
+  swapRequests: SwapRequest[];
+  totalRequests: number;
+}
+
+export interface UpdateSwapRequestStatusRequest {
+  status: 'accepted' | 'declined' | 'cancelled';
+}
+
+export interface UpdateSwapRequestStatusResponse {
+  message: string;
+  swapRequest: SwapRequest;
+}
+
 class ApiService {
   // Get user by NetID
   async getUserByNetId(netId: string) {
@@ -157,9 +215,29 @@ class ApiService {
 
   // Get hobby matches for a user
   async getUserMatches(userId: string): Promise<MatchResponse> {
+    console.log("🔍 Fetching matches for userId:", userId);
+    console.log("🔍 API URL:", `${API_BASE_URL}/${userId}/matches`);
+    
+    // First check if backend is healthy
+    try {
+      const healthResponse = await fetch(`${API_BASE_URL}/health`);
+      if (!healthResponse.ok) {
+        throw new Error("Backend is not healthy");
+      }
+      console.log("🔍 Backend health check passed");
+    } catch (error) {
+      console.error("🔍 Backend health check failed:", error);
+      throw new Error("Backend is not available");
+    }
+    
     const response = await fetch(`${API_BASE_URL}/${userId}/matches`);
     
+    console.log("🔍 Response status:", response.status);
+    console.log("🔍 Response ok:", response.ok);
+    
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("🔍 Error response:", errorText);
       throw new Error("Failed to fetch user matches");
     }
     
@@ -191,6 +269,67 @@ class ApiService {
 
     if (!response.ok) {
       throw new Error("Failed to normalize hobbies");
+    }
+
+    return response.json();
+  }
+
+  // Send a swap request
+  async sendSwapRequest(data: SendSwapRequestRequest): Promise<SendSwapRequestResponse> {
+    const response = await fetch(`${API_BASE_URL}/swap-requests`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to send swap request");
+    }
+
+    return response.json();
+  }
+
+  // Get sent swap requests for a user
+  async getSentSwapRequests(userId: string): Promise<GetSwapRequestsResponse> {
+    const response = await fetch(`${API_BASE_URL}/${userId}/sent-requests`);
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch sent swap requests");
+    }
+    
+    return response.json();
+  }
+
+  // Get received swap requests for a user
+  async getReceivedSwapRequests(userId: string): Promise<GetSwapRequestsResponse> {
+    const response = await fetch(`${API_BASE_URL}/${userId}/received-requests`);
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch received swap requests");
+    }
+    
+    return response.json();
+  }
+
+  // Update swap request status
+  async updateSwapRequestStatus(
+    requestId: string, 
+    data: UpdateSwapRequestStatusRequest
+  ): Promise<UpdateSwapRequestStatusResponse> {
+    const response = await fetch(`${API_BASE_URL}/swap-requests/${requestId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update swap request status");
     }
 
     return response.json();

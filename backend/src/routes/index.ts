@@ -5,6 +5,10 @@ import {
   getUsers,
   getUserByNetId,
   sendUser,
+  sendSwapRequest,
+  getSentSwapRequests,
+  getReceivedSwapRequests,
+  updateSwapRequestStatus,
   updatePassword,
   verifyPassword,
   updateUserPersonalInformation,
@@ -18,6 +22,7 @@ import {
   searchHobbyTeachers, 
   normalizeUserHobbies 
 } from "../controllers/matchingController";
+// Removed separate swapRequestController imports - now using userController
 
 const router = Router();
 
@@ -86,6 +91,26 @@ router.get("/info", (req: Request, res: Response) => {
         path: "/api/users/normalize-hobbies",
         description: "Normalize hobby names using AI",
       },
+      sendSwapRequest: {
+        method: "POST",
+        path: "/api/users/swap-requests",
+        description: "Send a swap request to another user",
+      },
+      getSentSwapRequests: {
+        method: "GET",
+        path: "/api/users/:userId/sent-requests",
+        description: "Get all sent swap requests for a user",
+      },
+      getReceivedSwapRequests: {
+        method: "GET",
+        path: "/api/users/:userId/received-requests",
+        description: "Get all received swap requests for a user",
+      },
+      updateSwapRequestStatus: {
+        method: "PATCH",
+        path: "/api/users/swap-requests/:requestId",
+        description: "Update swap request status (accept/decline/cancel)",
+      },
     },
   });
 });
@@ -115,5 +140,11 @@ router.get("/search-teachers", searchHobbyTeachers); // GET /api/users/search-te
 
 // POST routes for AI features
 router.post("/normalize-hobbies", normalizeUserHobbies); // POST /api/users/normalize-hobbies
+
+// Swap request routes (using userController)
+router.post("/swap-requests", sendSwapRequest); // POST /api/users/swap-requests
+router.get("/:userId/sent-requests", getSentSwapRequests); // GET /api/users/:userId/sent-requests
+router.get("/:userId/received-requests", getReceivedSwapRequests); // GET /api/users/:userId/received-requests
+router.patch("/swap-requests/:requestId", updateSwapRequestStatus); // PATCH /api/users/swap-requests/:requestId
 
 export default router;

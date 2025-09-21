@@ -5,6 +5,13 @@ export interface IUserInteraction {
   netid: string;
   timestamp?: Date;
   location?: string;
+  // Additional fields for swap requests
+  date?: string;
+  time?: string;
+  duration?: number;
+  message?: string;
+  status?: string;
+  updatedAt?: Date;
 }
 
 export interface IUser extends Document {
@@ -29,6 +36,13 @@ const InteractedUserSchemea: Schema<IUserInteraction> = new Schema({
   netid: { type: String, required: true },
   timestamp: { type: Date, required: false },
   location: { type: String, required: false },
+  // Additional fields for swap requests
+  date: { type: String, required: false },
+  time: { type: String, required: false },
+  duration: { type: Number, required: false },
+  message: { type: String, required: false },
+  status: { type: String, required: false, default: 'pending' },
+  updatedAt: { type: Date, required: false },
 });
 
 // 2️⃣ Define the schema

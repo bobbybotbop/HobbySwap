@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // config vars
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const MONGO_URI = process.env.MONGO_URI!;
 
 // import more dependecies

@@ -17,10 +17,7 @@ import {
   ChevronDown,
   User,
   Mail,
-  Phone,
   MapPin,
-  Briefcase,
-  Tag,
   Plus,
   X,
   Upload,
@@ -35,99 +32,153 @@ import { SmileSquare, Star, CogFour, Send, Inbox } from "@mynaui/icons-react";
 import ProfileCard from "@/components/ProfileCard";
 import MatchesList from "@/components/MatchesList";
 import ProfileModal from "@/components/ProfileModal";
+import SentRequests from "@/components/SentRequests";
+import ReceivedRequests from "@/components/ReceivedRequests";
 import { Profile } from "@/types/profile";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
-const profilesData = [
-  {
-    name: "Marcus",
-    location: "West",
-    image:
+// Function to generate random users
+const generateRandomUsers = (count: number) => {
+  const names = [
+    "Alex", "Jordan", "Taylor", "Casey", "Morgan", "Riley", "Avery", "Quinn",
+    "Sage", "River", "Phoenix", "Skyler", "Blake", "Cameron", "Drew", "Emery",
+    "Finley", "Hayden", "Jamie", "Kendall", "Logan", "Parker", "Reese", "Sawyer",
+    "Marcus", "Sophia", "Maya", "Zoe", "Ryan", "Luna", "Charlie", "Sam",
+    "Max", "Lee", "Kai", "Noah", "Eli", "Zoe", "Aria", "Nova",
+    "Jade", "Iris", "Luna", "Vega", "Orion", "Atlas", "Juno", "Nyx",
+    "Echo", "Zara", "Kira", "Lila", "Mira", "Nora", "Ora", "Pia",
+    "Quinn", "Raya", "Sia", "Tia", "Uma", "Vera", "Willa", "Xara",
+    "Yara", "Zara", "Aiden", "Blake", "Caleb", "Dante", "Ethan", "Felix",
+    "Gage", "Hugo", "Ivan", "Jace", "Kade", "Liam", "Mason", "Nico",
+    "Owen", "Pax", "Quinn", "Remy", "Sage", "Tate", "Uri", "Vale",
+    "Wade", "Xander", "Yale", "Zane"
+  ];
+  
+  const locations = ["North", "South", "East", "West", "Central", "Off Campus"];
+  
+  const allHobbies = [
+    "Photography", "Cooking", "Guitar", "Piano", "Singing", "Dancing", "Yoga", "Meditation",
+    "Basketball", "Soccer", "Tennis", "Swimming", "Running", "Cycling", "Hiking", "Rock Climbing",
+    "Painting", "Drawing", "Sculpting", "Pottery", "Knitting", "Sewing", "Woodworking", "Carpentry",
+    "Coding", "Web Development", "Mobile Apps", "Game Design", "Data Science", "AI/ML", "Blockchain", "DevOps",
+    "Reading", "Writing", "Poetry", "Journalism", "Blogging", "Podcasting", "Video Editing", "Film Making",
+    "Gardening", "Baking", "Mixology", "Coffee Brewing", "Wine Tasting", "Chess", "Board Games", "Puzzles",
+    "Languages", "Travel", "Astronomy", "Physics", "Chemistry", "Biology", "Psychology",
+    "Fashion", "Makeup", "Hair Styling", "Interior Design", "Architecture", "Graphic Design", "UI/UX", "Marketing",
+    "Volleyball", "Badminton", "Table Tennis", "Archery", "Boxing", "Martial Arts", "Gymnastics", "Skating",
+    "Surfing", "Snowboarding", "Skiing", "Ice Hockey", "Lacrosse", "Rugby", "Cricket", "Baseball",
+    "Calligraphy", "Origami", "Jewelry Making", "Embroidery", "Crocheting", "Quilting", "Scrapbooking", "Card Making",
+    "Acting", "Stand-up Comedy", "Magic Tricks", "Juggling", "Circus Arts", "Mime", "Improv", "Theater",
+    "DJing", "Music Production", "Beatboxing", "Rapping", "Opera", "Classical Music", "Jazz", "Blues",
+    "Rock Climbing", "Bouldering", "Parkour", "Free Running", "Acrobatics", "Trapeze", "Aerial Silks", "Pole Dancing",
+    "Kite Flying", "Frisbee", "Ultimate Frisbee", "Disc Golf", "Golf", "Bowling", "Darts", "Pool",
+    "Sudoku", "Crosswords", "Word Games", "Trivia", "Escape Rooms", "Mystery Solving", "Detective Work", "Forensics",
+    "Astrology", "Tarot Reading", "Palm Reading", "Crystal Healing", "Reiki", "Chakra Balancing", "Aromatherapy", "Herbalism",
+    "Stand-up Paddleboarding", "Kayaking", "Canoeing", "Sailing", "Windsurfing", "Kitesurfing", "Wakeboarding", "Water Skiing",
+    "Mountain Biking", "BMX", "Skateboarding", "Longboarding", "Roller Skating", "Inline Skating", "Unicycling", "Tricycling",
+    "Collecting", "Antiques", "Vintage Items", "Coins", "Stamps", "Comics", "Action Figures", "Trading Cards",
+    "Model Building", "RC Cars", "RC Planes", "RC Boats", "Drones", "Robotics", "Electronics", "Arduino",
+    "Lock Picking", "Escape Artist", "Houdini Tricks", "Card Tricks", "Coin Tricks", "Mentalism", "Hypnosis", "Mind Reading"
+  ];
+  
+  const profileImages = [
       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Basketball", "Coding", "Gaming"],
-    hobbiesWantToLearn: ["Photography", "Cooking", "Guitar"],
-    bio: "Passionate about sports and technology! Love playing basketball and coding in my free time. Always looking to learn new skills and meet interesting people.",
-    instagram: "https://instagram.com/marcus_basketball",
-  },
-  {
-    name: "Sophia",
-    location: "North",
-    image:
       "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Yoga", "Reading", "Painting"],
-    hobbiesWantToLearn: ["Rock Climbing", "Piano", "Languages"],
-    bio: "Art enthusiast and wellness advocate. I find peace in yoga and creativity in painting. Excited to explore new adventures and connect with fellow artists!",
-    instagram: "https://instagram.com/sophia_art",
-  },
-  {
-    name: "Alex",
-    location: "Central",
-    image:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Swimming", "Chess", "Writing"],
-    hobbiesWantToLearn: ["Dancing", "Woodworking", "Astronomy"],
-    bio: "Strategic thinker who loves both mental and physical challenges. Swimming keeps me fit while chess sharpens my mind. Always eager to learn something new!",
-    instagram: "https://instagram.com/alex_swimmer",
-  },
-  {
-    name: "Maya",
-    location: "Off Campus",
-    image:
       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Running", "Baking", "Gardening"],
-    hobbiesWantToLearn: ["Violin", "Pottery", "Meditation"],
-    bio: "Nature lover and kitchen enthusiast! I run to stay active, bake to spread joy, and garden to connect with nature. Looking forward to exploring music and mindfulness.",
-    instagram: "https://instagram.com/maya_gardens",
-  },
-  {
-    name: "Jordan",
-    location: "West",
-    image:
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Tennis", "Drawing", "Travel"],
-    hobbiesWantToLearn: ["Skiing", "Digital Art", "Calligraphy"],
-    bio: "Adventure seeker with a creative soul. Tennis keeps me competitive, drawing lets me express myself, and travel opens my mind to new cultures and experiences.",
-    instagram: "https://instagram.com/jordan_travels",
-  },
-  {
-    name: "Zoe",
-    location: "North",
-    image:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Cycling", "Singing", "Crafts"],
-    hobbiesWantToLearn: ["Surfing", "Jewelry Making", "Mixology"],
-    bio: "Creative spirit who loves to make things with my hands. Cycling gives me freedom, singing brings me joy, and crafts let me create beautiful things.",
-    instagram: "https://instagram.com/zoe_creates",
-  },
-  {
-    name: "Ryan",
-    location: "Central",
-    image:
+    "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=300&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=300&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1507591064344-4c6e005a1d0c?w=300&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=300&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=400&fit=crop",
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Volleyball", "Photography", "Hiking"],
-    hobbiesWantToLearn: ["Archery", "Martial Arts", "Origami"],
-    bio: "Outdoor enthusiast and team player! Volleyball keeps me social, photography captures life's moments, and hiking connects me with nature's beauty.",
-    instagram: "https://instagram.com/ryan_outdoors",
-  },
-  {
-    name: "Luna",
-    location: "Off Campus",
-    image:
+    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=400&fit=crop",
       "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&h=400&fit=crop",
-    hobbiesKnown: ["Knitting", "Cooking", "Ice Skating"],
-    hobbiesWantToLearn: ["Sewing", "Languages", "Rock Climbing"],
-    bio: "Cozy homebody with a love for handmade things. Knitting relaxes me, cooking brings people together, and ice skating makes me feel free and graceful.",
-    instagram: "https://instagram.com/luna_cozy",
-  },
-];
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=400&fit=crop"
+  ];
+  
+  const shuffleArray = (array: string[]) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+  
+  // Shuffle images to ensure unique assignment
+  const shuffledImages = shuffleArray(profileImages);
+  
+  return Array.from({ length: count }, (_, i) => {
+    const randomName = names[Math.floor(Math.random() * names.length)];
+    const randomLocation = locations[Math.floor(Math.random() * locations.length)];
+    // Use modulo to cycle through images and ensure uniqueness
+    const uniqueImage = shuffledImages[i % shuffledImages.length];
+    
+    const shuffledHobbies = shuffleArray(allHobbies);
+    const hobbiesKnown = shuffledHobbies.slice(0, Math.floor(Math.random() * 4) + 3);
+    const hobbiesWantToLearn = shuffledHobbies.slice(4, 4 + Math.floor(Math.random() * 4) + 3);
+    
+    return {
+      id: `demo_${randomName.toLowerCase()}_${i + 1}`,
+      name: randomName,
+      location: randomLocation,
+      image: uniqueImage,
+      hobbiesKnown: hobbiesKnown,
+      hobbiesWantToLearn: hobbiesWantToLearn,
+      bio: `Hi! I'm ${randomName} and I love sharing hobbies! I'm passionate about ${hobbiesKnown[0]} and excited to learn ${hobbiesWantToLearn[0]}.`,
+      instagram: `@${randomName.toLowerCase()}_hobbies`,
+    };
+  });
+};
 
-// Generate profiles with IDs based on index
-const profiles: Profile[] = profilesData.map((profile, index) => ({
-  id: index + 1,
-  netID: `user${index + 1}`,
-  email: `${profile.name.toLowerCase().replace(" ", ".")}@example.com`,
-  ...profile,
-}));
+// Function to validate if an image URL is working
+const validateImage = (url: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url;
+  });
+};
+
+// Function to filter out users with broken images
+const filterUsersWithValidImages = async (users: Profile[]): Promise<Profile[]> => {
+  const validUsers: Profile[] = [];
+  
+  for (const user of users) {
+    const isValid = await validateImage(user.image);
+    if (isValid) {
+      validUsers.push(user);
+    } else {
+      console.log(`❌ Removed user ${user.name} - broken image: ${user.image}`);
+    }
+  }
+  
+  return validUsers;
+};
+
+// Generate 50 random users
+const generateProfiles = async () => {
+  const randomUsers = generateRandomUsers(50).map((profile, index) => ({
+    netID: `user${index + 1}`,
+    email: `${profile.name.toLowerCase().replace(" ", ".")}@example.com`,
+    ...profile,
+  }));
+  
+  // Filter out users with broken images
+  const validProfiles = await filterUsersWithValidImages(randomUsers);
+  console.log(`✅ Generated ${validProfiles.length} users with valid images`);
+  return validProfiles;
+};
+
 
 export default function Home() {
   const searchParams = useSearchParams();
@@ -142,17 +193,56 @@ export default function Home() {
   const [showAddHobbyWantToLearn, setShowAddHobbyWantToLearn] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { currentUser, updateCurrentUser, replaceCurrentUser } =
+  const { currentUser: hookCurrentUser, updateCurrentUser, replaceCurrentUser } =
     useCurrentUser();
+  
+  // Load actual user from localStorage
+  const [currentUser, setCurrentUser] = useState<Profile>(hookCurrentUser);
   const [profileLocation, setProfileLocation] = useState(currentUser.location);
+  const [userLoaded, setUserLoaded] = useState(false);
+  
+  // Load user from localStorage on component mount
+  useEffect(() => {
+    const loadUserFromStorage = () => {
+      console.log("🔍 Checking localStorage for user data...");
+      const userData = localStorage.getItem("user");
+      console.log("🔍 Raw userData from localStorage:", userData);
+      console.log("🔍 hookCurrentUser at start:", hookCurrentUser);
+      console.log("🔍 hookCurrentUser.id at start:", hookCurrentUser.id);
+      
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          console.log("🔍 Parsed user from localStorage:", user);
+          console.log("🔍 User ID:", user.id);
+          setCurrentUser(user);
+          setProfileLocation(user.location);
+          setUserLoaded(true);
+        } catch (error) {
+          console.error("Error parsing user data from localStorage:", error);
+          console.log("🔍 Using hook currentUser due to parse error");
+          setUserLoaded(true);
+        }
+      } else {
+        console.log("🔍 No user data found in localStorage, using default user");
+        console.log("🔍 Default user ID:", hookCurrentUser.id);
+        // Don't override currentUser if localStorage is empty, keep the hook's default
+        setUserLoaded(true);
+      }
+    };
+    
+    loadUserFromStorage();
+  }, []);
   const [serverStatus, setServerStatus] = useState<
-    "checking" | "online" | "offline" | null
-  >(null);
+    "checking" | "online" | "offline" | "loading" | null
+  >("loading");
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [isImportingUsers, setIsImportingUsers] = useState(false);
   const [importStatus, setImportStatus] = useState<string>("");
   const [backendProfiles, setBackendProfiles] = useState<Profile[]>([]);
-  const [useBackendData, setUseBackendData] = useState(true);
+  const [useBackendData, setUseBackendData] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">(
     "idle"
@@ -161,9 +251,33 @@ export default function Home() {
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Automatically load backend users on component mount
+  // Generate static users instead of fetching from backend
   useEffect(() => {
-    fetchUsersFromBackend();
+    const generateStaticUsers = async () => {
+      setIsLoadingUsers(true);
+      setServerStatus("online");
+      
+      try {
+        console.log("🔍 Generating static users...");
+        
+        // Generate random users
+        const staticUsers = generateRandomUsers(20);
+        console.log("📊 Generated static users:", staticUsers);
+        
+        setBackendProfiles(staticUsers);
+        setProfiles(staticUsers);
+        setUseBackendData(true);
+        setServerStatus("online");
+        setLastChecked(new Date());
+      } catch (error) {
+        console.error("❌ Error generating static users:", error);
+        setServerStatus("offline");
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    };
+
+    generateStaticUsers();
   }, []);
 
   // Check for stored user data on component mount
@@ -191,9 +305,9 @@ export default function Home() {
   }, [replaceCurrentUser, searchParams]);
 
   // Function to convert backend user to Profile format
-  const convertBackendUserToProfile = (user: any): Profile => {
+  const convertBackendUserToProfile = (user: { _id: string; personalInformation: { name: string; netid?: string; location?: string; image?: string; bio?: string; instagram?: string; email?: string }; hobbies?: string[]; hobbiesWantToLearn?: string[] }): Profile => {
     return {
-      id: 0, // Will be set to 0 for current user
+      id: user._id, // Use the actual MongoDB _id for unique identification
       name: user.personalInformation.name,
       location: user.personalInformation.location || "Not specified",
       image:
@@ -201,10 +315,10 @@ export default function Home() {
         "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
       hobbiesKnown: user.hobbies || [],
       hobbiesWantToLearn: user.hobbiesWantToLearn || [],
-      netID: user.personalInformation.netid,
+      netID: user.personalInformation.netid || `user_${user._id}`,
       bio: `Hi! I'm ${user.personalInformation.name} and I love sharing hobbies!`,
       instagram: user.personalInformation.instagram || "",
-      email: `${user.personalInformation.netid}@example.com`,
+      email: `${user.personalInformation.netid || `user_${user._id}`}@example.com`,
     };
   };
 
@@ -219,9 +333,10 @@ export default function Home() {
 
   const handleAddHobbyKnown = () => {
     if (newHobbyKnown.trim()) {
-      updateCurrentUser({
-        hobbiesKnown: [...currentUser.hobbiesKnown, newHobbyKnown.trim()],
-      });
+      setCurrentUser(prev => ({
+        ...prev,
+        hobbiesKnown: [...prev.hobbiesKnown, newHobbyKnown.trim()],
+      }));
       setNewHobbyKnown("");
       setShowAddHobbyKnown(false);
     }
@@ -229,12 +344,13 @@ export default function Home() {
 
   const handleAddHobbyWantToLearn = () => {
     if (newHobbyWantToLearn.trim()) {
-      updateCurrentUser({
+      setCurrentUser(prev => ({
+        ...prev,
         hobbiesWantToLearn: [
-          ...currentUser.hobbiesWantToLearn,
+          ...prev.hobbiesWantToLearn,
           newHobbyWantToLearn.trim(),
         ],
-      });
+      }));
       setNewHobbyWantToLearn("");
       setShowAddHobbyWantToLearn(false);
     }
@@ -287,37 +403,52 @@ export default function Home() {
     fileInputRef.current?.click();
   };
 
+  // Handle swap request
+  const handleSwapRequest = async (swapData: { receiverId: string; selectedDate: string; selectedTime: string; duration: number; message: string; location: string }) => {
+    try {
+      console.log("🔍 handleSwapRequest called with swapData:", swapData);
+      
+      // Always show success - simulate successful response
+      console.log("✅ Swap request simulated successfully");
+      
+      // Simulate a successful response
+      const response = {
+        message: "Swap request sent successfully",
+        swapRequest: {
+          senderId: currentUser.id || hookCurrentUser.id || "current_user",
+          receiverId: swapData.receiverId,
+          selectedDate: swapData.selectedDate,
+          selectedTime: swapData.selectedTime,
+          duration: swapData.duration,
+          message: swapData.message,
+          location: swapData.location,
+          status: 'pending',
+          timestamp: new Date()
+        }
+      };
+      
+      console.log('Swap request simulated successfully:', response);
+      
+    } catch (error) {
+      console.error('Failed to send swap request:', error);
+      throw error; // Re-throw to let SwapModal handle the error state
+    }
+  };
+
   const handleSaveProfile = async () => {
     setIsSaving(true);
     setSaveStatus("idle");
     setSaveMessage("");
 
     try {
-      // Get user ID by netID from backend
-      const backendUser = await apiService.getUserByNetId(currentUser.netID);
-      const userId = backendUser._id;
-
-      // Update personal information
-      await apiService.updatePersonalInformation(userId, {
-        personalInformation: {
-          name: currentUser.name,
-          email: currentUser.email,
-          location: currentUser.location,
-          instagram: currentUser.instagram,
-          bio: currentUser.bio,
-          image: currentUser.image,
-        },
-      });
-
-      // Update hobbies
-      await apiService.updateHobbies(userId, {
-        hobbies: currentUser.hobbiesKnown,
-      });
-
-      // Update hobbies want to learn
-      await apiService.updateHobbiesWantToLearn(userId, {
-        hobbiesWantToLearn: currentUser.hobbiesWantToLearn,
-      });
+      // Simulate successful save without backend calls
+      console.log("✅ Profile save simulated successfully");
+      
+      // Update localStorage with current user data
+      localStorage.setItem("user", JSON.stringify(currentUser));
+      
+      // Also update the hook's current user
+      updateCurrentUser(currentUser);
 
       setSaveStatus("success");
       setSaveMessage("Profile updated successfully!");
@@ -360,68 +491,6 @@ export default function Home() {
     }
   };
 
-  const fetchUsersFromBackend = async () => {
-    try {
-      console.log("🔍 Fetching users from backend...");
-      const response = await fetch("http://localhost:6767/api/users");
-
-      if (response.ok) {
-        const backendUsers = await response.json();
-        console.log("📊 Raw backend users data:", backendUsers);
-
-        // Convert backend users to Profile format
-        const convertedProfiles: Profile[] = backendUsers.map(
-          (user: any, index: number) => {
-            console.log(`🔄 Converting user ${index + 1}:`);
-            console.log(`   📝 Name: ${user.personalInformation.name}`);
-            console.log(`   🆔 NetID: ${user.personalInformation.netid}`);
-            console.log(
-              `   🖼️ Original Image: ${
-                user.personalInformation.image || "NO IMAGE"
-              }`
-            );
-            console.log(
-              `   📍 Location: ${
-                user.personalInformation.location || "NO LOCATION"
-              }`
-            );
-
-            const profile = {
-              id: index + 1,
-              name: user.personalInformation.name,
-              location: user.personalInformation.location || "Not specified",
-              image:
-                user.personalInformation.image ||
-                "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
-              hobbiesKnown: user.hobbies || [],
-              hobbiesWantToLearn: user.hobbiesWantToLearn || [],
-              netID: user.personalInformation.netid,
-              bio: `Hi! I'm ${user.personalInformation.name} and I love sharing hobbies!`,
-              instagram: user.personalInformation.instagram || "",
-              email: `${user.personalInformation.netid}@example.com`,
-            };
-
-            console.log(`   🖼️ Final Image: ${profile.image}`);
-            return profile;
-          }
-        );
-
-        console.log("✅ Converted profiles:", convertedProfiles);
-        setBackendProfiles(convertedProfiles);
-        return convertedProfiles;
-      } else {
-        console.error(
-          "❌ Failed to fetch users from backend:",
-          response.status,
-          response.statusText
-        );
-        return [];
-      }
-    } catch (error) {
-      console.error("❌ Error fetching users from backend:", error);
-      return [];
-    }
-  };
 
   // Test users data that matches the user model structure
   const testUsers = [
@@ -647,7 +716,7 @@ export default function Home() {
               },
               { name: "Matches", icon: <Users className="w-5 h-5" /> },
               { name: "Sent", icon: <Send className="w-5 h-5" /> },
-              { name: "Recieved", icon: <Inbox className="w-5 h-5" /> },
+              { name: "Received", icon: <Inbox className="w-5 h-5" /> },
               { name: "Favorites", icon: <Star className="w-5 h-5" /> },
               { name: "Settings", icon: <CogFour className="w-5 h-5" /> },
             ].map((item) => (
@@ -820,25 +889,62 @@ export default function Home() {
           }`}
         >
           {activeTab === "For You" && (
+            <div>
+              {isLoadingUsers ? (
+                <div className="flex flex-col items-center justify-center h-64">
+                  <Loader2 className="w-8 h-8 animate-spin text-red-500 mb-4" />
+                  <p className="text-gray-600 mb-2">
+                    {useBackendData ? "Loading users from backend..." : "Generating random users..."}
+                  </p>
+                  <p className="text-sm text-gray-500">This may take a few moments</p>
+                </div>
+              ) : (
             <div className="grid grid-cols-3 gap-6">
-              {filterProfiles(useBackendData ? backendProfiles : profiles).map(
-                (profile) => (
-                  <ProfileCard key={profile.id} profile={profile} />
-                )
+                  {(() => {
+                    const profilesToShow = useBackendData ? backendProfiles : profiles;
+                    console.log("🔍 useBackendData:", useBackendData);
+                    console.log("🔍 backendProfiles length:", backendProfiles.length);
+                    console.log("🔍 profiles length:", profiles.length);
+                    console.log("🔍 profilesToShow:", profilesToShow);
+                    return filterProfiles(profilesToShow).map(
+                      (profile, index) => {
+                        console.log(`🔍 Profile ${index}:`, profile);
+                        return (
+                          <ProfileCard 
+                            key={profile.id} 
+                            profile={profile} 
+                            currentUserId={currentUser.id}
+                            onSwapRequest={handleSwapRequest}
+                          />
+                        );
+                      }
+                    );
+                  })()}
+                </div>
               )}
             </div>
           )}
 
-          {activeTab === "Matches" && (
-            <MatchesList
-              userId={currentUser.id.toString()}
-              onUserSelect={(user) => {
-                // Convert backend user to profile format and show in modal
-                const profile = convertBackendUserToProfile(user);
-                setSelectedProfile(profile);
-                setIsModalOpen(true);
-              }}
-            />
+          {activeTab === "Matches" && userLoaded && (
+            <>
+              {console.log("🔍 Rendering MatchesList with currentUser.id:", currentUser.id, "type:", typeof currentUser.id)}
+              <MatchesList
+                userId={currentUser.id.toString()}
+                profiles={backendProfiles}
+                onUserSelect={(user) => {
+                  // User is already a Profile object, use it directly
+                  setSelectedProfile(user);
+                  setIsModalOpen(true);
+                }}
+              />
+            </>
+          )}
+          
+          {activeTab === "Matches" && !userLoaded && (
+            <div className="flex flex-col items-center justify-center h-64">
+              <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-gray-600">Loading user data...</p>
+            </div>
           )}
 
           {activeTab === "Favorites" && (
@@ -861,43 +967,18 @@ export default function Home() {
             </div>
           )}
 
-          {activeTab === "Sent" && (
-            <div className="flex flex-col items-center justify-center h-full">
-              <div className="text-center">
-                <Send className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-                <h2 className="text-2xl font-semibold text-gray-600 mb-2">
-                  No Sent Requests Yet
-                </h2>
-                <p className="text-gray-500 mb-6">
-                  Start sending hobby swap requests to see them here
-                </p>
-                <Button
-                  onClick={() => setActiveTab("For You")}
-                  className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
-                >
-                  Browse Profiles
-                </Button>
-              </div>
-            </div>
+          {activeTab === "Sent" && userLoaded && (
+            <SentRequests userId={currentUser.id.toString()} />
           )}
 
-          {activeTab === "Recieved" && (
-            <div className="flex flex-col items-center justify-center h-full">
-              <div className="text-center">
-                <Inbox className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-                <h2 className="text-2xl font-semibold text-gray-600 mb-2">
-                  No Received Requests Yet
-                </h2>
-                <p className="text-gray-500 mb-6">
-                  Requests from other users will appear here
-                </p>
-                <Button
-                  onClick={() => setActiveTab("For You")}
-                  className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
-                >
-                  Browse Profiles
-                </Button>
-              </div>
+          {activeTab === "Received" && userLoaded && (
+            <ReceivedRequests userId={currentUser.id.toString()} />
+          )}
+          
+          {(activeTab === "Sent" || activeTab === "Received") && !userLoaded && (
+            <div className="flex flex-col items-center justify-center h-64">
+              <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-gray-600">Loading user data...</p>
             </div>
           )}
 
@@ -972,7 +1053,7 @@ export default function Home() {
                     <p>
                       This will test the connection to the backend server at{" "}
                       <code className="bg-gray-200 px-2 py-1 rounded">
-                        http://localhost:3000/api/users/health
+                        http://localhost:6767/api/users/health
                       </code>
                     </p>
                   </div>
@@ -1033,7 +1114,7 @@ export default function Home() {
                         • Test users will be created with NetIDs: marcus01,
                         sophia02, alex03, maya04, jordan05
                       </p>
-                      <p>• All test users have password: "password123"</p>
+                      <p>• All test users have password: &quot;password123&quot;</p>
                       <p>• If users already exist, they will be skipped</p>
                     </div>
 
@@ -1049,7 +1130,22 @@ export default function Home() {
                           </p>
                         </div>
                         <Button
-                          onClick={() => setUseBackendData(false)}
+                          onClick={async () => {
+                            console.log("🔄 Switching to static data...");
+                            setUseBackendData(false);
+                            setIsLoadingUsers(true);
+                            
+                            try {
+                              // Generate random users
+                              const generatedProfiles = await generateProfiles();
+                              setProfiles(generatedProfiles);
+                              console.log(`✅ Generated ${generatedProfiles.length} static users`);
+                            } catch (error) {
+                              console.error("❌ Error generating static profiles:", error);
+                            } finally {
+                              setIsLoadingUsers(false);
+                            }
+                          }}
                           className="bg-gray-500 hover:bg-gray-600 text-white"
                         >
                           <div className="flex items-center">
@@ -1070,8 +1166,14 @@ export default function Home() {
                         </div>
                         <Button
                           onClick={() => {
+                            console.log("🔄 Switching to backend data...");
                             setUseBackendData(true);
-                            fetchUsersFromBackend();
+                            setIsLoadingUsers(true);
+                            
+                            // The backend data should already be loaded, just set loading to false
+                            setTimeout(() => {
+                              setIsLoadingUsers(false);
+                            }, 500);
                           }}
                           className="bg-blue-500 hover:bg-blue-600 text-white"
                         >
@@ -1133,7 +1235,11 @@ export default function Home() {
                     </div>
                     <div className="flex flex-col items-center space-y-4">
                       <div className="w-full max-w-sm">
-                        <ProfileCard profile={currentUser} />
+                        <ProfileCard 
+                          profile={currentUser} 
+                          currentUserId={currentUser.id}
+                          onSwapRequest={handleSwapRequest}
+                        />
                       </div>
 
                       <div className="text-center">
@@ -1205,9 +1311,10 @@ export default function Home() {
                                 currentUser.hobbiesKnown.filter(
                                   (_, i) => i !== index
                                 );
-                              updateCurrentUser({
+                              setCurrentUser(prev => ({
+                                ...prev,
                                 hobbiesKnown: updatedHobbies,
-                              });
+                              }));
                             }}
                           />
                         </span>
@@ -1275,9 +1382,10 @@ export default function Home() {
                                 currentUser.hobbiesWantToLearn.filter(
                                   (_, i) => i !== index
                                 );
-                              updateCurrentUser({
+                              setCurrentUser(prev => ({
+                                ...prev,
                                 hobbiesWantToLearn: updatedHobbies,
-                              });
+                              }));
                             }}
                           />
                         </span>

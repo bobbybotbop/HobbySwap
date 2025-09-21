@@ -5,14 +5,17 @@ import { apiService, Match } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, Users, Star, ArrowRight, RefreshCw } from "lucide-react";
-import ProfileCard from "@/components/ProfileCard";
+import { Profile } from "@/types/profile";
 
 interface MatchesListProps {
   userId: string;
-  onUserSelect?: (user: any) => void;
+  profiles?: Profile[];
+  onUserSelect?: (user: Profile) => void;
 }
 
-export default function MatchesList({ userId, onUserSelect }: MatchesListProps) {
+export default function MatchesList({ userId, profiles, onUserSelect }: MatchesListProps) {
+  console.log("🔍 MatchesList received userId:", userId, "type:", typeof userId);
+  
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchHobby, setSearchHobby] = useState("");
@@ -20,16 +23,49 @@ export default function MatchesList({ userId, onUserSelect }: MatchesListProps) 
   const [searchLoading, setSearchLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"all" | "search">("all");
 
+  // Convert profiles to matches format
+  const convertProfilesToMatches = (profiles: Profile[]): Match[] => {
+    return profiles.map(profile => ({
+      user: {
+        _id: profile.id,
+        personalInformation: {
+          name: profile.name,
+          location: profile.location,
+          image: profile.image,
+          bio: profile.bio,
+          instagram: profile.instagram,
+          email: profile.email
+        },
+        hobbies: profile.hobbiesKnown,
+        hobbiesWantToLearn: profile.hobbiesWantToLearn
+      },
+      score: Math.floor(Math.random() * 50) + 50, // Random score between 50-100
+      theyKnowYouWant: profile.hobbiesWantToLearn.slice(0, 2), // First 2 hobbies they want to learn
+      theyWantYouKnow: profile.hobbiesKnown.slice(0, 2) // First 2 hobbies they know
+    }));
+  };
+
   // Fetch all matches
-  const fetchMatches = async () => {
-    if (!userId) return;
+  const fetchMatches = async (retryCount = 0) => {
+    console.log("🔍 MatchesList fetchMatches called with userId:", userId);
+    if (!userId) {
+      console.log("🔍 No userId provided, skipping fetch");
+      return;
+    }
     
     setLoading(true);
     try {
-      const response = await apiService.getUserMatches(userId);
-      setMatches(response.matches);
+      if (profiles && profiles.length > 0) {
+        console.log("🔍 Using static profiles for matches");
+        const matches = convertProfilesToMatches(profiles);
+        setMatches(matches);
+      } else {
+        console.log("🔍 No profiles provided, using empty matches");
+        setMatches([]);
+      }
     } catch (error) {
-      console.error("Error fetching matches:", error);
+      console.error("🔍 Error processing matches:", error);
+      setMatches([]);
     } finally {
       setLoading(false);
     }
@@ -52,8 +88,11 @@ export default function MatchesList({ userId, onUserSelect }: MatchesListProps) 
   };
 
   useEffect(() => {
-    fetchMatches();
-  }, [userId]);
+    console.log("🔍 MatchesList useEffect triggered, userId:", userId, "profiles:", profiles?.length);
+    if (userId) {
+      fetchMatches();
+    }
+  }, [userId, profiles]);
 
   const handleUserSelect = (match: Match) => {
     if (onUserSelect) {
@@ -245,7 +284,7 @@ export default function MatchesList({ userId, onUserSelect }: MatchesListProps) 
             <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No teachers found</h3>
             <p className="text-gray-600">
-              No one can teach "{searchHobby}" yet. Try a different hobby or check back later.
+              No one can teach &quot;{searchHobby}&quot; yet. Try a different hobby or check back later.
             </p>
           </div>
         )

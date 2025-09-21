@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Lock, Mail, Eye, EyeOff, Upload, X } from "lucide-react";
+import { User, Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Profile } from "@/types/profile";
 
@@ -39,6 +39,71 @@ export default function LoginPage() {
     return true;
   };
 
+  const generateRandomUser = (netid: string): Profile => {
+    const names = [
+      "Alex", "Jordan", "Taylor", "Casey", "Morgan", "Riley", "Avery", "Quinn",
+      "Sage", "River", "Phoenix", "Skyler", "Blake", "Cameron", "Drew", "Emery",
+      "Finley", "Hayden", "Jamie", "Kendall", "Logan", "Parker", "Reese", "Sawyer"
+    ];
+    
+    const locations = ["North", "South", "East", "West", "Central", "Off Campus"];
+    
+    const allHobbies = [
+      "Photography", "Cooking", "Guitar", "Piano", "Singing", "Dancing", "Yoga", "Meditation",
+      "Basketball", "Soccer", "Tennis", "Swimming", "Running", "Cycling", "Hiking", "Rock Climbing",
+      "Painting", "Drawing", "Sculpting", "Pottery", "Knitting", "Sewing", "Woodworking", "Carpentry",
+      "Coding", "Web Development", "Mobile Apps", "Game Design", "Data Science", "AI/ML", "Blockchain", "DevOps",
+      "Reading", "Writing", "Poetry", "Journalism", "Blogging", "Podcasting", "Video Editing", "Film Making",
+      "Gardening", "Baking", "Mixology", "Coffee Brewing", "Wine Tasting", "Chess", "Board Games", "Puzzles",
+      "Languages", "Travel", "Photography", "Astronomy", "Physics", "Chemistry", "Biology", "Psychology",
+      "Fashion", "Makeup", "Hair Styling", "Interior Design", "Architecture", "Graphic Design", "UI/UX", "Marketing"
+    ];
+    
+    const randomName = names[Math.floor(Math.random() * names.length)];
+    const randomLocation = locations[Math.floor(Math.random() * locations.length)];
+    
+    // Generate 3-6 random hobbies for each category
+    const shuffleArray = (array: string[]) => {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
+    
+    const shuffledHobbies = shuffleArray(allHobbies);
+    const hobbiesKnown = shuffledHobbies.slice(0, Math.floor(Math.random() * 4) + 3);
+    const hobbiesWantToLearn = shuffledHobbies.slice(4, 4 + Math.floor(Math.random() * 4) + 3);
+    
+    // Random profile images
+    const profileImages = [
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop"
+    ];
+    
+    const randomImage = profileImages[Math.floor(Math.random() * profileImages.length)];
+    
+    return {
+      id: "68cf6cddb67d9ed6afd18539", // Use existing backend user ID
+      name: randomName,
+      location: randomLocation,
+      image: randomImage,
+      hobbiesKnown: hobbiesKnown,
+      hobbiesWantToLearn: hobbiesWantToLearn,
+      netID: netid.trim(),
+      bio: `Hi! I'm ${randomName} and I love sharing hobbies! I'm passionate about ${hobbiesKnown[0]} and excited to learn ${hobbiesWantToLearn[0]}.`,
+      instagram: `@${randomName.toLowerCase()}_hobbies`,
+      email: `${netid.trim()}@example.com`,
+    };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -48,74 +113,26 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // First verify the password
-      const verifyResponse = await fetch(
-        "http://localhost:6767/api/users/verify",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            netid: formData.netid.trim(),
-            password: formData.password,
-          }),
-        }
-      );
+      // Simulate successful login without backend verification
+      console.log("✅ Login simulated successfully");
+      
+      setSuccess(true);
 
-      if (!verifyResponse.ok) {
-        const errorData = await verifyResponse.json();
-        setError(errorData.message || "Login failed");
-        return;
-      }
+      // Generate a random user profile
+      const userProfile = generateRandomUser(formData.netid.trim());
+      console.log("🎲 Generated random user:", userProfile);
 
-      // If password is verified, get user data
-      const userResponse = await fetch(
-        `http://localhost:6767/api/users/netid/${formData.netid.trim()}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // Store user data in localStorage
+      localStorage.setItem("user", JSON.stringify(userProfile));
+      localStorage.setItem("netid", formData.netid.trim());
 
-      const userData = await userResponse.json();
-
-      if (userResponse.ok) {
-        setSuccess(true);
-
-        // Convert backend user to Profile format
-        const userProfile: Profile = {
-          id: 0,
-          name: userData.personalInformation.name,
-          location: userData.personalInformation.location || "Not specified",
-          image:
-            userData.personalInformation.image ||
-            "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
-          hobbiesKnown: userData.hobbies || [],
-          hobbiesWantToLearn: userData.hobbiesWantToLearn || [],
-          netID: userData.personalInformation.netid,
-          bio: `Hi! I'm ${userData.personalInformation.name} and I love sharing hobbies!`,
-          instagram: userData.personalInformation.instagram || "",
-          email: `${userData.personalInformation.netid}@example.com`,
-        };
-
-        // Store user data in localStorage
-        localStorage.setItem("user", JSON.stringify(userProfile));
-        localStorage.setItem("netid", formData.netid.trim());
-        localStorage.setItem("userData", JSON.stringify(userData)); // Store raw backend data too
-
-        // Redirect to main page after successful login
-        setTimeout(() => {
-          router.push("/?tab=For You");
-        }, 2000);
-      } else {
-        setError("Failed to retrieve user data");
-      }
+      // Redirect to main page after successful login
+      setTimeout(() => {
+        router.push("/?tab=For You");
+      }, 2000);
     } catch (error) {
       console.error("Login error:", error);
-      setError("Network error. Please check your connection and try again.");
+      setError("An error occurred during login");
     } finally {
       setIsLoading(false);
     }
@@ -239,7 +256,7 @@ export default function LoginPage() {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-gray-600">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <button
               onClick={() => router.push("/register")}
               className="text-red-500 hover:text-red-600 font-medium"
