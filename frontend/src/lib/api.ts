@@ -25,6 +25,48 @@ export interface UpdateBioRequest {
   };
 }
 
+export interface Match {
+  user: {
+    _id: string;
+    name: string;
+    personalInformation: {
+      name: string;
+      image?: string;
+      location?: string;
+      bio?: string;
+    };
+  };
+  score: number;
+  theyKnowYouWant: string[];
+  theyWantYouKnow: string[];
+}
+
+export interface MatchResponse {
+  message: string;
+  matches: Match[];
+  totalMatches: number;
+}
+
+export interface HobbySearchResponse {
+  message: string;
+  hobby: string;
+  matches: Match[];
+  totalMatches: number;
+}
+
+export interface NormalizeHobbiesRequest {
+  hobbies: string[];
+}
+
+export interface NormalizeHobbiesResponse {
+  message: string;
+  originalHobbies: string[];
+  normalizedHobbies: Array<{
+    hobby: string;
+    related: string[];
+  }>;
+}
+
 class ApiService {
   // Get user by NetID
   async getUserByNetId(netId: string) {
@@ -111,6 +153,47 @@ class ApiService {
 
     const data = await response.json();
     return data.imageUrl;
+  }
+
+  // Get hobby matches for a user
+  async getUserMatches(userId: string): Promise<MatchResponse> {
+    const response = await fetch(`${API_BASE_URL}/${userId}/matches`);
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch user matches");
+    }
+    
+    return response.json();
+  }
+
+  // Search for users who can teach a specific hobby
+  async searchHobbyTeachers(userId: string, hobby: string): Promise<HobbySearchResponse> {
+    const response = await fetch(
+      `${API_BASE_URL}/search-teachers?userId=${userId}&hobby=${encodeURIComponent(hobby)}`
+    );
+    
+    if (!response.ok) {
+      throw new Error("Failed to search hobby teachers");
+    }
+    
+    return response.json();
+  }
+
+  // Normalize hobby names using AI
+  async normalizeHobbies(data: NormalizeHobbiesRequest): Promise<NormalizeHobbiesResponse> {
+    const response = await fetch(`${API_BASE_URL}/normalize-hobbies`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to normalize hobbies");
+    }
+
+    return response.json();
   }
 }
 

@@ -64,7 +64,7 @@ Return ONLY the JSON array, no other text:`;
     
     // Parse the JSON
     return JSON.parse(jsonString);
-  } catch (error) {
+  } catch (error: any) {
     console.error('API Error:', error.response?.data || error.message);
     throw error;
   }
@@ -76,8 +76,8 @@ async function matchUsers(currentUser: any, allUsers: any[]) {
   console.log("Normalizing hobbies with AI...");
   
   // Extract raw hobby names
-  const currentWantsRaw = currentUser.hobbiesWant.map(h => h.name);
-  const currentKnowsRaw = currentUser.hobbiesKnow.map(h => h.name);
+  const currentWantsRaw = currentUser.hobbiesWant.map((h: any) => h.name);
+  const currentKnowsRaw = currentUser.hobbiesKnow.map((h: any) => h.name);
   
   // Normalize current user's hobbies
   const normalizedWants = await normalizeHobbies(currentWantsRaw);
@@ -87,8 +87,8 @@ async function matchUsers(currentUser: any, allUsers: any[]) {
   // console.log("🔍 Normalized knows:", normalizedKnows);
   
   // Create sets for fast lookups using normalized hobby names
-  const currentWants = new Set(normalizedWants.map(h => h.hobby.toLowerCase()));
-  const currentKnows = new Set(normalizedKnows.map(h => h.hobby.toLowerCase()));
+  const currentWants = new Set(normalizedWants.filter((h: any) => h && h.hobby).map((h: any) => h.hobby.toLowerCase()));
+  const currentKnows = new Set(normalizedKnows.filter((h: any) => h && h.hobby).map((h: any) => h.hobby.toLowerCase()));
   
   console.log("Hobbies normalized successfully");
 
@@ -103,8 +103,8 @@ async function matchUsers(currentUser: any, allUsers: any[]) {
     if (other._id === currentUser._id) continue;
 
     // Normalize other user's hobbies
-    const otherKnowsRaw = other.hobbiesKnow.map(h => h.name);
-    const otherWantsRaw = other.hobbiesWant.map(h => h.name);
+    const otherKnowsRaw = other.hobbiesKnow.map((h: any) => h.name);
+    const otherWantsRaw = other.hobbiesWant.map((h: any) => h.name);
     
     const normalizedOtherKnows = await normalizeHobbies(otherKnowsRaw);
     const normalizedOtherWants = await normalizeHobbies(otherWantsRaw);
@@ -112,8 +112,8 @@ async function matchUsers(currentUser: any, allUsers: any[]) {
     // console.log(`🔍 User ${other._id} normalized knows:`, normalizedOtherKnows);
     // console.log(`🔍 User ${other._id} normalized wants:`, normalizedOtherWants);
     
-    const otherKnows = new Set(normalizedOtherKnows.map(h => h.hobby.toLowerCase()));
-    const otherWants = new Set(normalizedOtherWants.map(h => h.hobby.toLowerCase()));
+    const otherKnows = new Set(normalizedOtherKnows.filter((h: any) => h && h.hobby).map((h: any) => h.hobby.toLowerCase()));
+    const otherWants = new Set(normalizedOtherWants.filter((h: any) => h && h.hobby).map((h: any) => h.hobby.toLowerCase()));
 
     // intersect: hobbies the other person knows that current user wants
     const theyKnowYouWant = [...otherKnows].filter((h): h is string => currentWants.has(h));
@@ -138,10 +138,10 @@ async function matchUsers(currentUser: any, allUsers: any[]) {
   return matches;
 }
 
-export {normalizeHobbies, matchUsers}
-/** 
+export {normalizeHobbies, matchUsers, searchUsers}
+
 async function searchUsers(currentUser: any, allUsers: any[], searchedHobby: string) {
-  c// 1. Input validation
+  // 1. Input validation
   if (!searchedHobby || searchedHobby.trim() === "") {
     console.log("Please enter a hobby to search.");
     return;
@@ -177,7 +177,6 @@ async function searchUsers(currentUser: any, allUsers: any[], searchedHobby: str
     console.log(`   You can teach them: ${match.theyWantYouKnow.join(", ")}\n`);
   });
 }
-*/
 
 /** EVERYTHING BELOW IS TEST CASES FOR MATCHUSERS FUNCTION */
 async function testMatchUsers() {
@@ -292,7 +291,7 @@ async function testMatchUsers() {
 }
 
 /** Test block */
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (require.main === module) {
   // This runs only when you run the file directly with ts-node
   (async () => {
     try {
@@ -310,7 +309,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   })();
 }
 
-/** Test cases for the searchUsers function 
+/** Test cases for the searchUsers function */
 async function testSearchUsersOriginal() {
   console.log("=== Testing original searchUsers function ===\n");
 
@@ -386,5 +385,3 @@ async function testSearchUsersOriginal() {
   console.log("Test 6: Search for 'cooking'");
   await searchUsers(currentUser, allUsers, "cooking");
 }
-
-*/

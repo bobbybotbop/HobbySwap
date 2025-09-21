@@ -9,29 +9,29 @@ export const uploadProfileImage = async (
   res: Response
 ): Promise<void> => {
   try {
-    if (!req.file) {
+    if (!(req as any).file) {
       res.status(400).json({ message: "No image file provided" });
       return;
     }
 
     // Validate the uploaded file
-    const validation = validateImageFile(req.file);
+    const validation = validateImageFile((req as any).file);
     if (!validation.isValid) {
       res.status(400).json({ message: validation.error });
       return;
     }
 
     console.log("📤 Uploading profile image:", {
-      filename: req.file.originalname,
-      size: req.file.size,
-      mimetype: req.file.mimetype,
+      filename: (req as any).file.originalname,
+      size: (req as any).file.size,
+      mimetype: (req as any).file.mimetype,
     });
 
     // Upload to ImgBB
     const imageUrl = await uploadImageToImgBB(
-      req.file.buffer,
-      req.file.originalname,
-      req.file.mimetype
+      (req as any).file.buffer,
+      (req as any).file.originalname,
+      (req as any).file.mimetype
     );
 
     res.status(200).json({

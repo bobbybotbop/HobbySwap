@@ -29,9 +29,11 @@ import {
   XCircle,
   RefreshCw,
   Search,
+  Users,
 } from "lucide-react";
 import { SmileSquare, Star, CogFour, Send, Inbox } from "@mynaui/icons-react";
 import ProfileCard from "@/components/ProfileCard";
+import MatchesList from "@/components/MatchesList";
 import { Profile } from "@/types/profile";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -640,6 +642,7 @@ export default function Home() {
                 name: "For You",
                 icon: <SmileSquare className="w-5 h-5" />,
               },
+              { name: "Matches", icon: <Users className="w-5 h-5" /> },
               { name: "Sent", icon: <Send className="w-5 h-5" /> },
               { name: "Recieved", icon: <Inbox className="w-5 h-5" /> },
               { name: "Favorites", icon: <Star className="w-5 h-5" /> },
@@ -821,6 +824,18 @@ export default function Home() {
                 )
               )}
             </div>
+          )}
+
+          {activeTab === "Matches" && (
+            <MatchesList 
+              userId={currentUser.id} 
+              onUserSelect={(user) => {
+                // Convert backend user to profile format and show in modal
+                const profile = convertBackendUserToProfile(user);
+                setSelectedProfile(profile);
+                setIsModalOpen(true);
+              }}
+            />
           )}
 
           {activeTab === "Favorites" && (

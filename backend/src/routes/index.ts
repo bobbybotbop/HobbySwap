@@ -13,6 +13,11 @@ import {
 } from "../controllers/userController";
 import { uploadProfileImage } from "../controllers/imageController";
 import { upload } from "../services/imageService";
+import { 
+  getUserMatches, 
+  searchHobbyTeachers, 
+  normalizeUserHobbies 
+} from "../controllers/matchingController";
 
 const router = Router();
 
@@ -66,6 +71,21 @@ router.get("/info", (req: Request, res: Response) => {
         path: "/api/users/:id",
         description: "Delete a user",
       },
+      getUserMatches: {
+        method: "GET",
+        path: "/api/users/:userId/matches",
+        description: "Get hobby matches for a user",
+      },
+      searchHobbyTeachers: {
+        method: "GET",
+        path: "/api/users/search-teachers?userId=123&hobby=guitar",
+        description: "Search for users who can teach a specific hobby",
+      },
+      normalizeHobbies: {
+        method: "POST",
+        path: "/api/users/normalize-hobbies",
+        description: "Normalize hobby names using AI",
+      },
     },
   });
 });
@@ -88,5 +108,12 @@ router.patch("/updateHobbiesToLearn/:id", updateUserHobbiesWant);
 
 // POST routes for file uploads
 router.post("/upload-image", upload.single("image"), uploadProfileImage); // POST /api/users/upload-image
+
+// GET routes for matching algorithms
+router.get("/:userId/matches", getUserMatches); // GET /api/users/:userId/matches
+router.get("/search-teachers", searchHobbyTeachers); // GET /api/users/search-teachers?userId=123&hobby=guitar
+
+// POST routes for AI features
+router.post("/normalize-hobbies", normalizeUserHobbies); // POST /api/users/normalize-hobbies
 
 export default router;
