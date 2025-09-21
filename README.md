@@ -2,6 +2,15 @@
 
 A platform for Cornell University affiliated hobby enthusiasts to connect, share, and trade their hobbies and knowledge. They can create a profile with their NetID, username, and password, list hobbies they want to learn and hobbies they want to teach, and request to match with another user to "trade" their respective hobbies. HobbySwap uses intelligent matching algorithms to connect people based on related hobbies and provide community-building enterntainment to their lives. 
 
+## ✨ Features
+
+- **Skill & Hobby Profiles** - List what you know and what you want to learn
+- **For You Page** – Personalized recommendations for potential matches based on your profile
+- **Manual Search** – Search the entire community for a specific hobby or skill
+- **Two-Way Matching** – Users who want to learn a skill are paired with those who can teach it — and vice versa
+- **Smart Suggestions** – LLM-powered recommendations link related hobbies and skills
+- **Profile Pictures** – Optional image upload support via ImgBB API.
+
 ## 🚀 Tech Stack
 
 ### Frontend
@@ -186,4 +195,4 @@ The backend can be deployed to any Node.js hosting service.
 
 ## 📄 License
 
-This project is licensed under the ISC License.
+Built for the Cornell Big Red Hackathon!
