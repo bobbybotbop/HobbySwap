@@ -17,6 +17,10 @@ A platform for Cornell University affiliated hobby enthusiasts to connect, share
 - **TypeScript** - Type-safe development
 - **CORS** - Cross-origin resource sharing
 
+### Database
+
+- **MongoDB**
+
 ## 📁 Project Structure
 
 ```
