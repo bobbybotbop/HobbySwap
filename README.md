@@ -1,24 +1,39 @@
+
 # HobbySwap
 
-A modern platform for hobby enthusiasts to connect, share, and trade their hobbies.
+A platform for Cornell University affiliated hobby enthusiasts to connect, share, and trade their hobbies and knowledge. They can create a profile with their NetID, username, and password, list hobbies they want to learn and hobbies they want to teach, and request to match with another user to "trade" their respective hobbies. HobbySwap uses intelligent matching algorithms to connect people based on related hobbies and provide community-building enterntainment to their lives. 
+
+![Next.js](https://img.shields.io/badge/Next.js-000000?logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white)
+
+## ✨ Features
+
+- **Skill & Hobby Profiles** - List what you know and what you want to learn
+- **For You Page** – Personalized recommendations for potential matches based on your profile
+- **Manual Search** – Search the entire community for a specific hobby or skill
+- **Two-Way Matching** – Users who want to learn a skill are paired with those who can teach it — and vice versa
+- **Smart Suggestions** – LLM-powered recommendations link related hobbies and skills
+- **Profile Pictures** – Optional image upload support via ImgBB API.
 
 ## 🚀 Tech Stack
 
 ### Frontend
 
-- **Next.js 15** - React framework with App Router
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Utility-first CSS framework
-- **ESLint** - Code linting and formatting
+- **⚛️ Next.js 15** - React framework with App Router
+- **🟦 TypeScript** - Type-safe development
+- **🎨 Tailwind CSS** - Utility-first CSS framework
 
 ### Backend
 
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web application framework
-- **TypeScript** - Type-safe development
-- **CORS** - Cross-origin resource sharing
-- **Helmet** - Security middleware
-- **Morgan** - HTTP request logger
+- **🟩 Node.js** - JavaScript runtime
+- **🟦 TypeScript** - Type-safe development
+
+### Database
+
+- **🍃 MongoDB**
 
 ## 📁 Project Structure
 
@@ -183,14 +198,6 @@ The frontend can be deployed to Vercel or any static hosting service.
 
 The backend can be deployed to any Node.js hosting service.
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
 ## 📄 License
 
-This project is licensed under the ISC License.
+Built for the Cornell Big Red Hackathon!
