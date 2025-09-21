@@ -1,6 +1,6 @@
 # HobbySwap
 
-A modern platform for hobby enthusiasts to connect, share, and trade their hobbies.
+A platform for Cornell University affiliated hobby enthusiasts to connect, share, and trade their hobbies and knowledge. They can create a profile with their NetID, username, and password, list hobbies they want to learn and hobbies they want to teach, and request to match with another user to "trade" their respective hobbies. HobbySwap uses intelligent matching algorithms to connect people based on related hobbies. 
 
 ## 🚀 Tech Stack
 
@@ -14,11 +14,8 @@ A modern platform for hobby enthusiasts to connect, share, and trade their hobbi
 ### Backend
 
 - **Node.js** - JavaScript runtime
-- **Express.js** - Web application framework
 - **TypeScript** - Type-safe development
 - **CORS** - Cross-origin resource sharing
-- **Helmet** - Security middleware
-- **Morgan** - HTTP request logger
 
 ## 📁 Project Structure
 
