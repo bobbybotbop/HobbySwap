@@ -13,10 +13,10 @@ import {
 } from "../controllers/userController";
 import { uploadProfileImage } from "../controllers/imageController";
 import { upload } from "../services/imageService";
-import { 
-  getUserMatches, 
-  searchHobbyTeachers, 
-  normalizeUserHobbies 
+import {
+  getUserMatches,
+  searchHobbyTeachers,
+  normalizeUserHobbies,
 } from "../controllers/matchingController";
 
 const router = Router();
@@ -30,6 +30,63 @@ router.get("/health", (req: Request, res: Response) => {
   });
 });
 
+// Algorithms health check route
+router.get("/health/algorithms", async (req: Request, res: Response) => {
+  try {
+    // Import the algorithms module dynamically to test it
+    const { normalizeHobbies, matchUsers } = await import("../algorithms");
+
+    // Test basic functionality with sample data
+    const testHobbies = ["guitar", "cooking"];
+    const testUser = {
+      _id: "test",
+      hobbiesWant: [{ name: "guitar" }],
+      hobbiesKnow: [{ name: "cooking" }],
+    };
+    const testUsers = [
+      {
+        _id: "test2",
+        hobbiesKnow: [{ name: "guitar" }],
+        hobbiesWant: [{ name: "cooking" }],
+      },
+    ];
+
+    // Test normalizeHobbies function
+    const normalizedHobbies = await normalizeHobbies(testHobbies);
+
+    // Test matchUsers function
+    const matches = await matchUsers(testUser, testUsers);
+
+    res.status(200).json({
+      status: "OK",
+      message: "Algorithms module is working correctly",
+      timestamp: new Date().toISOString(),
+      tests: {
+        normalizeHobbies: {
+          input: testHobbies,
+          output: normalizedHobbies,
+          success:
+            Array.isArray(normalizedHobbies) && normalizedHobbies.length > 0,
+        },
+        matchUsers: {
+          input: { currentUser: testUser._id, allUsers: testUsers.length },
+          output: matches.length,
+          success: Array.isArray(matches),
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error("Algorithms health check failed:", error);
+    res.status(500).json({
+      status: "ERROR",
+      message: "Algorithms module health check failed",
+      timestamp: new Date().toISOString(),
+      error: error.message,
+      details: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
+  }
+});
+
 // API info route
 router.get("/info", (req: Request, res: Response) => {
   res.json({
@@ -40,6 +97,11 @@ router.get("/info", (req: Request, res: Response) => {
         method: "GET",
         path: "/api/users/health",
         description: "Check if the server is running",
+      },
+      algorithmsHealth: {
+        method: "GET",
+        path: "/api/users/health/algorithms",
+        description: "Check if the algorithms module is working correctly",
       },
       getAllUsers: {
         method: "GET",

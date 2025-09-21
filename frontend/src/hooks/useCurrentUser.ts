@@ -19,7 +19,10 @@ const initialCurrentUser: Profile = {
 export const useCurrentUser = () => {
   const [currentUser, setCurrentUser] = useState<Profile>(initialCurrentUser);
 
+  console.log("🔍 useCurrentUser: Current user state:", currentUser);
+
   const updateCurrentUser = useCallback((updates: Partial<Profile>) => {
+    console.log("🔍 useCurrentUser: Updating user with:", updates);
     setCurrentUser((prev) => ({
       ...prev,
       ...updates,

@@ -87,7 +87,7 @@ export default function LoginPage() {
 
         // Convert backend user to Profile format
         const userProfile: Profile = {
-          id: 0,
+          id: userData._id, // Use the actual MongoDB _id from backend
           name: userData.personalInformation.name,
           location: userData.personalInformation.location || "Not specified",
           image:

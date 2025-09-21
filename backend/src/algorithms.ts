@@ -1,6 +1,6 @@
-import dotenv from 'dotenv';
-dotenv.config({ path: './backend/.env' });
-import axios from 'axios';
+import dotenv from "dotenv";
+dotenv.config({ path: "./backend/.env" });
+import axios from "axios";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
@@ -42,30 +42,30 @@ Return ONLY the JSON array, no other text:`;
 
   try {
     const response = await axios.post(
-      'https://openrouter.ai/api/v1/chat/completions',
+      "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: 'meta-llama/llama-3.1-8b-instruct',
-        messages: [{ role: 'user', content: prompt }]
+        model: "meta-llama/llama-3.1-8b-instruct",
+        messages: [{ role: "user", content: prompt }],
       },
       {
         headers: {
           Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       }
     );
 
     // The text the model generated
     const content = response.data.choices[0].message.content;
-    
+
     // Try to extract JSON from the response (in case it has extra text)
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     const jsonString = jsonMatch ? jsonMatch[0] : content;
-    
+
     // Parse the JSON
     return JSON.parse(jsonString);
   } catch (error: any) {
-    console.error('API Error:', error.response?.data || error.message);
+    console.error("API Error:", error.response?.data || error.message);
     throw error;
   }
 }
@@ -74,22 +74,30 @@ Return ONLY the JSON array, no other text:`;
 async function matchUsers(currentUser: any, allUsers: any[]) {
   // Normalize hobbies using AI for better matching
   console.log("Normalizing hobbies with AI...");
-  
+
   // Extract raw hobby names
   const currentWantsRaw = currentUser.hobbiesWant.map((h: any) => h.name);
   const currentKnowsRaw = currentUser.hobbiesKnow.map((h: any) => h.name);
-  
+
   // Normalize current user's hobbies
   const normalizedWants = await normalizeHobbies(currentWantsRaw);
   const normalizedKnows = await normalizeHobbies(currentKnowsRaw);
-  
+
   // console.log("🔍 Normalized wants:", normalizedWants);
   // console.log("🔍 Normalized knows:", normalizedKnows);
-  
+
   // Create sets for fast lookups using normalized hobby names
-  const currentWants = new Set(normalizedWants.filter((h: any) => h && h.hobby).map((h: any) => h.hobby.toLowerCase()));
-  const currentKnows = new Set(normalizedKnows.filter((h: any) => h && h.hobby).map((h: any) => h.hobby.toLowerCase()));
-  
+  const currentWants = new Set(
+    normalizedWants
+      .filter((h: any) => h && h.hobby)
+      .map((h: any) => h.hobby.toLowerCase())
+  );
+  const currentKnows = new Set(
+    normalizedKnows
+      .filter((h: any) => h && h.hobby)
+      .map((h: any) => h.hobby.toLowerCase())
+  );
+
   console.log("Hobbies normalized successfully");
 
   const matches: Array<{
@@ -105,20 +113,32 @@ async function matchUsers(currentUser: any, allUsers: any[]) {
     // Normalize other user's hobbies
     const otherKnowsRaw = other.hobbiesKnow.map((h: any) => h.name);
     const otherWantsRaw = other.hobbiesWant.map((h: any) => h.name);
-    
+
     const normalizedOtherKnows = await normalizeHobbies(otherKnowsRaw);
     const normalizedOtherWants = await normalizeHobbies(otherWantsRaw);
-    
+
     // console.log(`🔍 User ${other._id} normalized knows:`, normalizedOtherKnows);
     // console.log(`🔍 User ${other._id} normalized wants:`, normalizedOtherWants);
-    
-    const otherKnows = new Set(normalizedOtherKnows.filter((h: any) => h && h.hobby).map((h: any) => h.hobby.toLowerCase()));
-    const otherWants = new Set(normalizedOtherWants.filter((h: any) => h && h.hobby).map((h: any) => h.hobby.toLowerCase()));
+
+    const otherKnows = new Set(
+      normalizedOtherKnows
+        .filter((h: any) => h && h.hobby)
+        .map((h: any) => h.hobby.toLowerCase())
+    );
+    const otherWants = new Set(
+      normalizedOtherWants
+        .filter((h: any) => h && h.hobby)
+        .map((h: any) => h.hobby.toLowerCase())
+    );
 
     // intersect: hobbies the other person knows that current user wants
-    const theyKnowYouWant = [...otherKnows].filter((h): h is string => currentWants.has(h));
+    const theyKnowYouWant = [...otherKnows].filter((h): h is string =>
+      currentWants.has(h)
+    );
     // intersect: hobbies the other person wants that current user knows
-    const theyWantYouKnow = [...otherWants].filter((h): h is string => currentKnows.has(h));
+    const theyWantYouKnow = [...otherWants].filter((h): h is string =>
+      currentKnows.has(h)
+    );
 
     const score = theyKnowYouWant.length + theyWantYouKnow.length;
 
@@ -127,7 +147,7 @@ async function matchUsers(currentUser: any, allUsers: any[]) {
         user: other,
         score,
         theyKnowYouWant,
-        theyWantYouKnow
+        theyWantYouKnow,
       });
     }
   }
@@ -138,9 +158,13 @@ async function matchUsers(currentUser: any, allUsers: any[]) {
   return matches;
 }
 
-export {normalizeHobbies, matchUsers, searchUsers}
+export { normalizeHobbies, matchUsers, searchUsers };
 
-async function searchUsers(currentUser: any, allUsers: any[], searchedHobby: string) {
+async function searchUsers(
+  currentUser: any,
+  allUsers: any[],
+  searchedHobby: string
+) {
   // 1. Input validation
   if (!searchedHobby || searchedHobby.trim() === "") {
     console.log("Please enter a hobby to search.");
@@ -160,8 +184,8 @@ async function searchUsers(currentUser: any, allUsers: any[], searchedHobby: str
   const matchedUsers = await matchUsers(currentUser, allUsers);
 
   // 4. Filter matches to only users who can teach this hobby
-  const filteredMatches = matchedUsers.filter(match =>
-    match.theyKnowYouWant.map(h => h.toLowerCase()).includes(normalizedHobby)
+  const filteredMatches = matchedUsers.filter((match) =>
+    match.theyKnowYouWant.map((h) => h.toLowerCase()).includes(normalizedHobby)
   );
 
   if (filteredMatches.length === 0) {
@@ -171,8 +195,10 @@ async function searchUsers(currentUser: any, allUsers: any[], searchedHobby: str
 
   // 5. Display the filtered matches
   console.log(`Users who can teach "${searchedHobby}":`);
-  filteredMatches.forEach(match => {
-    console.log(`- ${match.user.name || match.user._id} (Score: ${match.score})`);
+  filteredMatches.forEach((match) => {
+    console.log(
+      `- ${match.user.name || match.user._id} (Score: ${match.score})`
+    );
     console.log(`   They can teach you: ${match.theyKnowYouWant.join(", ")}`);
     console.log(`   You can teach them: ${match.theyWantYouKnow.join(", ")}\n`);
   });
@@ -188,68 +214,45 @@ async function testMatchUsers() {
     hobbiesWant: [
       { name: "guitar" },
       { name: "cooking" },
-      { name: "photography" }
+      { name: "photography" },
     ],
-    hobbiesKnow: [
-      { name: "soccer" },
-      { name: "painting" },
-      { name: "coding" }
-    ]
+    hobbiesKnow: [{ name: "soccer" }, { name: "painting" }, { name: "coding" }],
   };
 
   const allUsers = [
     {
       _id: "user2",
-      hobbiesKnow: [
-        { name: "guitar" },
-        { name: "cooking" }
-      ],
-      hobbiesWant: [
-        { name: "soccer" },
-        { name: "painting" }
-      ]
+      hobbiesKnow: [{ name: "guitar" }, { name: "cooking" }],
+      hobbiesWant: [{ name: "soccer" }, { name: "painting" }],
     },
     {
       _id: "user3",
-      hobbiesKnow: [
-        { name: "photography" }
-      ],
-      hobbiesWant: [
-        { name: "coding" }
-      ]
+      hobbiesKnow: [{ name: "photography" }],
+      hobbiesWant: [{ name: "coding" }],
     },
     {
       _id: "user4",
-      hobbiesKnow: [
-        { name: "dancing" },
-        { name: "singing" }
-      ],
-      hobbiesWant: [
-        { name: "guitar" }
-      ]
+      hobbiesKnow: [{ name: "dancing" }, { name: "singing" }],
+      hobbiesWant: [{ name: "guitar" }],
     },
     {
       _id: "user5",
       hobbiesKnow: [
         { name: "guitar" },
         { name: "cooking" },
-        { name: "photography" }
+        { name: "photography" },
       ],
       hobbiesWant: [
         { name: "soccer" },
         { name: "painting" },
-        { name: "coding" }
-      ]
+        { name: "coding" },
+      ],
     },
     {
       _id: "user6",
-      hobbiesKnow: [
-        { name: "tennis" }
-      ],
-      hobbiesWant: [
-        { name: "swimming" }
-      ]
-    }
+      hobbiesKnow: [{ name: "tennis" }],
+      hobbiesWant: [{ name: "swimming" }],
+    },
   ];
 
   // Run the test
@@ -257,35 +260,47 @@ async function testMatchUsers() {
 
   // Display results
   console.log("Current User:");
-  console.log(`- Wants to learn: ${currentUser.hobbiesWant.map(h => h.name).join(", ")}`);
-  console.log(`- Knows how to do: ${currentUser.hobbiesKnow.map(h => h.name).join(", ")}\n`);
+  console.log(
+    `- Wants to learn: ${currentUser.hobbiesWant.map((h) => h.name).join(", ")}`
+  );
+  console.log(
+    `- Knows how to do: ${currentUser.hobbiesKnow
+      .map((h) => h.name)
+      .join(", ")}\n`
+  );
 
   console.log("Matches found:");
   matches.forEach((match, index) => {
     console.log(`${index + 1}. User ${match.user._id} (Score: ${match.score})`);
     console.log(`   - They can teach you: ${match.theyKnowYouWant.join(", ")}`);
-    console.log(`   - You can teach them: ${match.theyWantYouKnow.join(", ")}\n`);
+    console.log(
+      `   - You can teach them: ${match.theyWantYouKnow.join(", ")}\n`
+    );
   });
 
   // Test assertions
   console.log("=== Test Results ===");
-  
+
   // Test 1: Should find 4 matches (excluding user6 with no overlap)
   console.log(`✓ Found ${matches.length} matches (expected: 4)`);
-  
+
   // Test 2: User5 should have highest score (6)
   const highestScore = matches[0];
-  console.log(`✓ Highest score: ${highestScore.score} (User: ${highestScore.user._id})`);
-  
-  // Test 3: User6 should not be in matches (score 0)
-  const user6Match = matches.find(m => m.user._id === "user6");
-  console.log(`✓ User6 excluded: ${user6Match ? "FAIL" : "PASS"}`);
-  
-  // Test 4: Scores should be in descending order
-  const scoresDescending = matches.every((match, i) => 
-    i === 0 || match.score <= matches[i-1].score
+  console.log(
+    `✓ Highest score: ${highestScore.score} (User: ${highestScore.user._id})`
   );
-  console.log(`✓ Scores in descending order: ${scoresDescending ? "PASS" : "FAIL"}`);
+
+  // Test 3: User6 should not be in matches (score 0)
+  const user6Match = matches.find((m) => m.user._id === "user6");
+  console.log(`✓ User6 excluded: ${user6Match ? "FAIL" : "PASS"}`);
+
+  // Test 4: Scores should be in descending order
+  const scoresDescending = matches.every(
+    (match, i) => i === 0 || match.score <= matches[i - 1].score
+  );
+  console.log(
+    `✓ Scores in descending order: ${scoresDescending ? "PASS" : "FAIL"}`
+  );
 
   return matches;
 }
@@ -300,7 +315,7 @@ if (require.main === module) {
       const result = await normalizeHobbies(raw);
       console.log("Normalized hobbies:", result);
       console.log("\n");
-      
+
       // Test matchUsers function
       await testMatchUsers();
     } catch (err) {
@@ -319,13 +334,9 @@ async function testSearchUsersOriginal() {
     hobbiesWant: [
       { name: "guitar" },
       { name: "cooking" },
-      { name: "photography" }
+      { name: "photography" },
     ],
-    hobbiesKnow: [
-      { name: "soccer" },
-      { name: "painting" },
-      { name: "coding" }
-    ]
+    hobbiesKnow: [{ name: "soccer" }, { name: "painting" }, { name: "coding" }],
   };
 
   const allUsers = [
@@ -333,32 +344,40 @@ async function testSearchUsersOriginal() {
       _id: "user2",
       name: "Alice",
       hobbiesKnow: [{ name: "guitar" }, { name: "cooking" }],
-      hobbiesWant: [{ name: "soccer" }, { name: "painting" }]
+      hobbiesWant: [{ name: "soccer" }, { name: "painting" }],
     },
     {
       _id: "user3",
       name: "Bob",
       hobbiesKnow: [{ name: "photography" }],
-      hobbiesWant: [{ name: "coding" }]
+      hobbiesWant: [{ name: "coding" }],
     },
     {
       _id: "user4",
       name: "Charlie",
       hobbiesKnow: [{ name: "dancing" }, { name: "singing" }],
-      hobbiesWant: [{ name: "guitar" }]
+      hobbiesWant: [{ name: "guitar" }],
     },
     {
       _id: "user5",
       name: "Diana",
-      hobbiesKnow: [{ name: "guitar" }, { name: "cooking" }, { name: "photography" }],
-      hobbiesWant: [{ name: "soccer" }, { name: "painting" }, { name: "coding" }]
+      hobbiesKnow: [
+        { name: "guitar" },
+        { name: "cooking" },
+        { name: "photography" },
+      ],
+      hobbiesWant: [
+        { name: "soccer" },
+        { name: "painting" },
+        { name: "coding" },
+      ],
     },
     {
       _id: "user6",
       name: "Eve",
       hobbiesKnow: [{ name: "tennis" }],
-      hobbiesWant: [{ name: "swimming" }]
-    }
+      hobbiesWant: [{ name: "swimming" }],
+    },
   ];
 
   // --- Test 1: Single hobby search ---

@@ -27,23 +27,39 @@ export const getUserMatches = async (
     // Transform data to match algorithm expectations
     const currentUserForMatching = {
       _id: currentUser._id,
-      hobbiesKnow: currentUser.hobbies.map((hobby: string) => ({ name: hobby })),
-      hobbiesWant: currentUser.hobbiesWantToLearn.map((hobby: string) => ({ name: hobby })),
+      hobbiesKnow: currentUser.hobbies.map((hobby: string) => ({
+        name: hobby,
+      })),
+      hobbiesWant: currentUser.hobbiesWantToLearn.map((hobby: string) => ({
+        name: hobby,
+      })),
     };
 
     const allUsersForMatching = allUsers.map((user) => ({
       _id: user._id,
       name: user.personalInformation.name,
       hobbiesKnow: user.hobbies.map((hobby: string) => ({ name: hobby })),
-      hobbiesWant: user.hobbiesWantToLearn.map((hobby: string) => ({ name: hobby })),
+      hobbiesWant: user.hobbiesWantToLearn.map((hobby: string) => ({
+        name: hobby,
+      })),
       personalInformation: user.personalInformation,
     }));
 
-    console.log("🔍 Finding matches for user:", currentUser.personalInformation.name);
-    console.log("👥 Searching among", allUsersForMatching.length, "other users");
+    console.log(
+      "🔍 Finding matches for user:",
+      currentUser.personalInformation.name
+    );
+    console.log(
+      "👥 Searching among",
+      allUsersForMatching.length,
+      "other users"
+    );
 
     // Get matches using the algorithm
-    const matches = await matchUsers(currentUserForMatching, allUsersForMatching);
+    const matches = await matchUsers(
+      currentUserForMatching,
+      allUsersForMatching
+    );
 
     console.log(`✅ Found ${matches.length} matches`);
 
@@ -67,8 +83,8 @@ export const searchHobbyTeachers = async (
     const { userId, hobby } = req.query;
 
     if (!userId || !hobby) {
-      res.status(400).json({ 
-        message: "Both userId and hobby parameters are required" 
+      res.status(400).json({
+        message: "Both userId and hobby parameters are required",
       });
       return;
     }
@@ -91,27 +107,43 @@ export const searchHobbyTeachers = async (
     const currentUserForMatching = {
       _id: currentUser._id,
       name: currentUser.personalInformation.name,
-      hobbiesKnow: currentUser.hobbies.map((hobby: string) => ({ name: hobby })),
-      hobbiesWant: currentUser.hobbiesWantToLearn.map((hobby: string) => ({ name: hobby })),
+      hobbiesKnow: currentUser.hobbies.map((hobby: string) => ({
+        name: hobby,
+      })),
+      hobbiesWant: currentUser.hobbiesWantToLearn.map((hobby: string) => ({
+        name: hobby,
+      })),
     };
 
     const allUsersForMatching = allUsers.map((user) => ({
       _id: user._id,
       name: user.personalInformation.name,
       hobbiesKnow: user.hobbies.map((hobby: string) => ({ name: hobby })),
-      hobbiesWant: user.hobbiesWantToLearn.map((hobby: string) => ({ name: hobby })),
+      hobbiesWant: user.hobbiesWantToLearn.map((hobby: string) => ({
+        name: hobby,
+      })),
       personalInformation: user.personalInformation,
     }));
 
-    console.log(`🔍 Searching for teachers of "${hobby}" for user:`, currentUser.personalInformation.name);
+    console.log(
+      `🔍 Searching for teachers of "${hobby}" for user:`,
+      currentUser.personalInformation.name
+    );
 
     // Search for users who can teach this hobby
-    await searchUsers(currentUserForMatching, allUsersForMatching, hobby as string);
+    await searchUsers(
+      currentUserForMatching,
+      allUsersForMatching,
+      hobby as string
+    );
 
     // Also get the filtered matches for the response
-    const allMatches = await matchUsers(currentUserForMatching, allUsersForMatching);
-    const hobbyMatches = allMatches.filter(match =>
-      match.theyKnowYouWant.some(h => 
+    const allMatches = await matchUsers(
+      currentUserForMatching,
+      allUsersForMatching
+    );
+    const hobbyMatches = allMatches.filter((match) =>
+      match.theyKnowYouWant.some((h) =>
         h.toLowerCase().includes((hobby as string).toLowerCase())
       )
     );
@@ -137,8 +169,8 @@ export const normalizeUserHobbies = async (
     const { hobbies } = req.body;
 
     if (!hobbies || !Array.isArray(hobbies)) {
-      res.status(400).json({ 
-        message: "Hobbies array is required" 
+      res.status(400).json({
+        message: "Hobbies array is required",
       });
       return;
     }

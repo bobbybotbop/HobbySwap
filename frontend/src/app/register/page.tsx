@@ -146,7 +146,7 @@ export default function RegisterPage() {
 
         // Create user profile from registration data
         const userProfile: Profile = {
-          id: 0,
+          id: data._id, // Use the actual MongoDB _id from backend response
           name: formData.username.trim(),
           location: "Not specified", // Will be updated when user edits profile
           image:
