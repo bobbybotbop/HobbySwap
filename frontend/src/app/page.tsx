@@ -167,6 +167,13 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [favoriteProfiles, setFavoriteProfiles] = useState<Profile[]>([]);
+  const [sentUsers, setSentUsers] = useState<any[]>([]);
+  const [receivedUsers, setReceivedUsers] = useState<any[]>([]);
+  const [notification, setNotification] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
 
   // Automatically load backend users on component mount
   useEffect(() => {
@@ -196,6 +203,35 @@ export default function Home() {
       setFavoriteProfiles([]);
     }
   }, [activeTab, currentUser.id, currentUser.netID]);
+
+  // Load swap data when switching to Sent or Received tabs
+  useEffect(() => {
+    if (
+      (activeTab === "Sent" || activeTab === "Recieved") &&
+      currentUser.id &&
+      currentUser.id !== "0"
+    ) {
+      loadSwapData();
+    } else if (
+      (activeTab === "Sent" || activeTab === "Recieved") &&
+      currentUser.netID === "jd123"
+    ) {
+      // Default user - just initialize empty swap data
+      console.log("ℹ️ Using default user, initializing empty swap data");
+      setSentUsers([]);
+      setReceivedUsers([]);
+    }
+  }, [activeTab, currentUser.id, currentUser.netID]);
+
+  // Auto-hide notification after 4 seconds
+  useEffect(() => {
+    if (notification.show) {
+      const timer = setTimeout(() => {
+        setNotification((prev) => ({ ...prev, show: false }));
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification.show]);
 
   // Check for stored user data on component mount
   useEffect(() => {
@@ -569,6 +605,72 @@ export default function Home() {
     }
   };
 
+  // Load user's sent and received users
+  const loadSwapData = async () => {
+    try {
+      console.log("🔄 Loading swap data for user:", currentUser.id);
+      console.log("🔄 Current user netID:", currentUser.netID);
+
+      // Check if we have a valid MongoDB ObjectId
+      if (!currentUser.id || currentUser.id === "0") {
+        console.log("⚠️ No valid user ID, trying to get user by NetID");
+        try {
+          const backendUser = await apiService.getUserByNetId(
+            currentUser.netID
+          );
+          console.log("✅ Found user by NetID:", backendUser);
+
+          // Update current user with the correct ID
+          updateCurrentUser({ id: backendUser._id });
+
+          // Load sent and received users
+          setSentUsers(backendUser.usersSent || []);
+          setReceivedUsers(backendUser.usersReceived || []);
+
+          console.log("🔄 Loaded swap data:", {
+            sent: backendUser.usersSent?.length || 0,
+            received: backendUser.usersReceived?.length || 0,
+          });
+        } catch (netIdError: any) {
+          console.error("❌ Error getting user by NetID:", netIdError);
+
+          // If user doesn't exist in database, that's okay - they just have no swap data yet
+          if (
+            netIdError.message.includes("404") ||
+            netIdError.message.includes("User not found")
+          ) {
+            console.log(
+              "ℹ️ User not found in database, initializing empty swap data"
+            );
+            setSentUsers([]);
+            setReceivedUsers([]);
+          } else {
+            // For other errors, still set empty state but log the error
+            setSentUsers([]);
+            setReceivedUsers([]);
+          }
+        }
+        return;
+      }
+
+      // Get user data to access usersSent and usersReceived
+      const backendUser = await apiService.getUserByNetId(currentUser.netID);
+      console.log("🔄 Backend user data:", backendUser);
+
+      setSentUsers(backendUser.usersSent || []);
+      setReceivedUsers(backendUser.usersReceived || []);
+
+      console.log("🔄 Loaded swap data:", {
+        sent: backendUser.usersSent?.length || 0,
+        received: backendUser.usersReceived?.length || 0,
+      });
+    } catch (error) {
+      console.error("❌ Error loading swap data:", error);
+      setSentUsers([]);
+      setReceivedUsers([]);
+    }
+  };
+
   // Handle favorite toggle
   const handleFavoriteToggle = async (
     profileId: string,
@@ -613,6 +715,101 @@ export default function Home() {
     } catch (error) {
       console.error("❌ Error in handleFavoriteToggle:", error);
     }
+  };
+
+  // Handle swap request
+  const handleSwapRequest = async (profileId: string, profileName: string) => {
+    try {
+      let userId = currentUser.id;
+
+      // If we don't have a valid ID, get it from the backend
+      if (!userId || userId === "0") {
+        try {
+          const backendUser = await apiService.getUserByNetId(
+            currentUser.netID
+          );
+          userId = backendUser._id;
+          updateCurrentUser({ id: userId });
+        } catch (netIdError: any) {
+          console.error(
+            "❌ Error getting user by NetID in handleSwapRequest:",
+            netIdError
+          );
+
+          // If user doesn't exist in database, we can't send swap requests
+          if (
+            netIdError.message.includes("404") ||
+            netIdError.message.includes("User not found")
+          ) {
+            console.log(
+              "ℹ️ User not found in database, cannot send swap requests"
+            );
+            setNotification({
+              show: true,
+              message:
+                "Please log in or create an account to send swap requests.",
+              type: "error",
+            });
+            return;
+          } else {
+            throw netIdError; // Re-throw other errors
+          }
+        }
+      }
+
+      // Find the target user's netID from backend profiles
+      const targetProfile = backendProfiles.find((p) => p.id === profileId);
+      if (!targetProfile) {
+        setNotification({
+          show: true,
+          message: "Target user not found.",
+          type: "error",
+        });
+        return;
+      }
+
+      // Send swap request
+      await apiService.sendSwapRequest(
+        userId,
+        targetProfile.netID,
+        currentUser.location
+      );
+
+      // Show success notification
+      setNotification({
+        show: true,
+        message: `Swap request sent to ${profileName}!`,
+        type: "success",
+      });
+
+      // Refresh swap data to show the new sent request
+      await loadSwapData();
+
+      console.log(`✅ Swap request sent to ${profileName}`);
+    } catch (error: any) {
+      console.error("❌ Error in handleSwapRequest:", error);
+
+      // Show error notification
+      let errorMessage = "Failed to send swap request. Please try again.";
+      if (error.message.includes("already been sent")) {
+        errorMessage = `You've already sent a swap request to ${profileName}.`;
+      } else if (error.message.includes("Cannot send to yourself")) {
+        errorMessage = "You cannot send a swap request to yourself.";
+      } else if (error.message.includes("does not exist")) {
+        errorMessage = "Target user does not exist.";
+      }
+
+      setNotification({
+        show: true,
+        message: errorMessage,
+        type: "error",
+      });
+    }
+  };
+
+  // Helper function to get profile data from netID
+  const getProfileFromNetId = (netId: string): Profile | null => {
+    return backendProfiles.find((p) => p.netID === netId) || null;
   };
 
   // Test users data that matches the user model structure
@@ -1021,6 +1218,7 @@ export default function Home() {
                     currentUserId={currentUser.id}
                     isFavorited={favorites.includes(profile.id)}
                     onFavoriteToggle={handleFavoriteToggle}
+                    onSwapRequest={handleSwapRequest}
                   />
                 )
               )}
@@ -1065,6 +1263,7 @@ export default function Home() {
                           );
                         }
                       }}
+                      onSwapRequest={handleSwapRequest}
                     />
                   ))}
                 </div>
@@ -1091,43 +1290,164 @@ export default function Home() {
           )}
 
           {activeTab === "Sent" && (
-            <div className="flex flex-col items-center justify-center h-full">
-              <div className="text-center">
-                <Send className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-                <h2 className="text-2xl font-semibold text-gray-600 mb-2">
-                  No Sent Requests Yet
-                </h2>
-                <p className="text-gray-500 mb-6">
-                  Start sending hobby swap requests to see them here
-                </p>
-                <Button
-                  onClick={() => setActiveTab("Search")}
-                  className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
-                >
-                  Browse Profiles
-                </Button>
-              </div>
-            </div>
+            <>
+              {sentUsers.length > 0 ? (
+                <div className="grid grid-cols-3 gap-6">
+                  {sentUsers.map((sentUser, index) => {
+                    const profile = getProfileFromNetId(sentUser.netid);
+                    if (!profile) return null;
+
+                    return (
+                      <div
+                        key={index}
+                        className="bg-white rounded-lg shadow-md p-6 border border-gray-100"
+                      >
+                        <div className="flex items-center space-x-4 mb-4">
+                          <div className="w-12 h-12 rounded-full overflow-hidden">
+                            <img
+                              src={profile.image}
+                              alt={profile.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              {profile.name}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              @{sentUser.netid}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          <p>
+                            <strong>Sent:</strong>{" "}
+                            {new Date(
+                              sentUser.timestamp || sentUser.date
+                            ).toLocaleDateString()}
+                          </p>
+                          {sentUser.location && (
+                            <p>
+                              <strong>Location:</strong> {sentUser.location}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="text-center">
+                    <Send className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+                    <h2 className="text-2xl font-semibold text-gray-600 mb-2">
+                      No Sent Requests Yet
+                    </h2>
+                    <p className="text-gray-500 mb-6">
+                      Start sending hobby swap requests to see them here
+                    </p>
+                    <Button
+                      onClick={() => setActiveTab("Search")}
+                      className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                    >
+                      Browse Profiles
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {activeTab === "Recieved" && (
-            <div className="flex flex-col items-center justify-center h-full">
-              <div className="text-center">
-                <Inbox className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-                <h2 className="text-2xl font-semibold text-gray-600 mb-2">
-                  No Received Requests Yet
-                </h2>
-                <p className="text-gray-500 mb-6">
-                  Requests from other users will appear here
-                </p>
-                <Button
-                  onClick={() => setActiveTab("Search")}
-                  className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
-                >
-                  Browse Profiles
-                </Button>
-              </div>
-            </div>
+            <>
+              {receivedUsers.length > 0 ? (
+                <div className="grid grid-cols-3 gap-6">
+                  {receivedUsers.map((receivedUser, index) => {
+                    const profile = getProfileFromNetId(receivedUser.netid);
+                    if (!profile) return null;
+
+                    return (
+                      <div
+                        key={index}
+                        className="bg-white rounded-lg shadow-md p-6 border border-gray-100"
+                      >
+                        <div className="flex items-center space-x-4 mb-4">
+                          <div className="w-12 h-12 rounded-full overflow-hidden">
+                            <img
+                              src={profile.image}
+                              alt={profile.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              {profile.name}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              @{receivedUser.netid}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-4">
+                          <p>
+                            <strong>Received:</strong>{" "}
+                            {new Date(
+                              receivedUser.timestamp || receivedUser.date
+                            ).toLocaleDateString()}
+                          </p>
+                          {receivedUser.location && (
+                            <p>
+                              <strong>Location:</strong> {receivedUser.location}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={() => {
+                              setSelectedProfile(profile);
+                              setIsModalOpen(true);
+                            }}
+                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2"
+                          >
+                            View Profile
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              // You could implement a response feature here
+                              console.log(
+                                "Responding to swap request from:",
+                                receivedUser.netid
+                              );
+                            }}
+                            className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm py-2"
+                          >
+                            Respond
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="text-center">
+                    <Inbox className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+                    <h2 className="text-2xl font-semibold text-gray-600 mb-2">
+                      No Received Requests Yet
+                    </h2>
+                    <p className="text-gray-500 mb-6">
+                      Requests from other users will appear here
+                    </p>
+                    <Button
+                      onClick={() => setActiveTab("Search")}
+                      className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                    >
+                      Browse Profiles
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {activeTab === "Settings" && (
@@ -1701,6 +2021,39 @@ export default function Home() {
             setSelectedProfile(null);
           }}
         />
+      )}
+
+      {/* Notification */}
+      {notification.show && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm">
+          <div
+            className={`p-4 rounded-lg shadow-lg border ${
+              notification.type === "success"
+                ? "bg-green-100 text-green-800 border-green-200"
+                : "bg-red-100 text-red-800 border-red-200"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                {notification.type === "success" ? (
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                ) : (
+                  <XCircle className="w-5 h-5 mr-2" />
+                )}
+                <span className="font-medium">{notification.message}</span>
+              </div>
+              <button
+                onClick={() =>
+                  setNotification((prev) => ({ ...prev, show: false }))
+                }
+                className="ml-4 text-gray-500 hover:text-gray-700"
+                title="Close notification"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

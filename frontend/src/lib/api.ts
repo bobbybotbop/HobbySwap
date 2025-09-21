@@ -280,6 +280,44 @@ class ApiService {
     console.log("✅ API: getFavorites - Success, data:", data);
     return data;
   }
+
+  // Send swap request to user
+  async sendSwapRequest(
+    userId: string,
+    targetNetId: string,
+    location?: string
+  ) {
+    console.log("🔄 API: sendSwapRequest - userId:", userId);
+    console.log("🔄 API: sendSwapRequest - targetNetId:", targetNetId);
+    console.log("🔄 API: sendSwapRequest - location:", location);
+
+    const response = await fetch(`${API_BASE_URL}/${userId}/send`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        netid: targetNetId,
+        location: location || "",
+        date: new Date().toISOString(),
+      }),
+    });
+
+    console.log("📊 API: sendSwapRequest - Response status:", response.status);
+    console.log("📊 API: sendSwapRequest - Response ok:", response.ok);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("❌ API: sendSwapRequest - Error response:", errorText);
+      throw new Error(
+        `Failed to send swap request: ${response.status} ${response.statusText} - ${errorText}`
+      );
+    }
+
+    const data = await response.json();
+    console.log("✅ API: sendSwapRequest - Success, data:", data);
+    return data;
+  }
 }
 
 export const apiService = new ApiService();

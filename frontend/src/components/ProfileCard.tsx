@@ -9,6 +9,7 @@ interface ProfileCardProps {
   currentUserId?: string;
   isFavorited?: boolean;
   onFavoriteToggle?: (profileId: string, isFavorited: boolean) => Promise<void>;
+  onSwapRequest?: (profileId: string, profileName: string) => Promise<void>;
 }
 
 const ProfileCard: React.FC<ProfileCardProps> = ({
@@ -16,9 +17,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   currentUserId,
   isFavorited = false,
   onFavoriteToggle,
+  onSwapRequest,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFavoriting, setIsFavoriting] = useState(false);
+  const [isSwapping, setIsSwapping] = useState(false);
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
@@ -37,6 +40,20 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       console.error("Error toggling favorite:", error);
     } finally {
       setIsFavoriting(false);
+    }
+  };
+
+  const handleSwapClick = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    if (!onSwapRequest || isSwapping) return;
+
+    setIsSwapping(true);
+    try {
+      await onSwapRequest(profile.id, profile.name);
+    } catch (error) {
+      console.error("Error sending swap request:", error);
+    } finally {
+      setIsSwapping(false);
     }
   };
   return (
@@ -140,8 +157,16 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           >
             More info
           </button>
-          <button className="flex items-center space-x-1.5 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-            <span>Swap</span>
+          <button
+            onClick={handleSwapClick}
+            disabled={isSwapping || !currentUserId}
+            className={`flex items-center space-x-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              isSwapping || !currentUserId
+                ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                : "bg-red-500 hover:bg-red-600 text-white"
+            }`}
+          >
+            <span>{isSwapping ? "Sending..." : "Swap"}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
