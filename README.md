@@ -22,19 +22,19 @@ A platform for Cornell University affiliated hobby enthusiasts to connect, share
 
 ### Frontend
 
-- **Next.js 15** - React framework with App Router
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Utility-first CSS framework
-- **ESLint** - Code linting and formatting
+- **⚛️ Next.js 15** - React framework with App Router
+- **🟦 TypeScript** - Type-safe development
+- **🎨 Tailwind CSS** - Utility-first CSS framework
+- **🧹 ESLint** - Code linting and formatting
 
 ### Backend
 
-- **Node.js** - JavaScript runtime
-- **TypeScript** - Type-safe development
+- **🟩 Node.js** - JavaScript runtime
+- **🟦 TypeScript** - Type-safe development
 
 ### Database
 
-- **MongoDB**
+- **🍃 MongoDB**
 
 ## 📁 Project Structure
 
