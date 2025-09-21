@@ -152,12 +152,8 @@ export default function Home() {
     "checking" | "online" | "offline" | null
   >(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
-  const [algorithmsStatus, setAlgorithmsStatus] = useState<
-    "checking" | "online" | "offline" | null
-  >(null);
-  const [algorithmsLastChecked, setAlgorithmsLastChecked] =
-    useState<Date | null>(null);
-  const [algorithmsDetails, setAlgorithmsDetails] = useState<any>(null);
+  // Algorithms status state removed
+  // Algorithms details state removed
   const [isImportingUsers, setIsImportingUsers] = useState(false);
   const [importStatus, setImportStatus] = useState<string>("");
   const [backendProfiles, setBackendProfiles] = useState<Profile[]>([]);
@@ -389,28 +385,7 @@ export default function Home() {
     }
   };
 
-  const checkAlgorithmsHealth = async () => {
-    setAlgorithmsStatus("checking");
-    setAlgorithmsLastChecked(new Date());
-
-    try {
-      const response = await fetch(
-        "http://localhost:6767/api/users/health/algorithms"
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setAlgorithmsStatus("online");
-        setAlgorithmsDetails(data);
-      } else {
-        setAlgorithmsStatus("offline");
-        setAlgorithmsDetails(null);
-      }
-    } catch (error) {
-      console.error("Algorithms health check failed:", error);
-      setAlgorithmsStatus("offline");
-      setAlgorithmsDetails(null);
-    }
-  };
+  // Algorithms health check function removed
 
   const fetchUsersFromBackend = async () => {
     try {
@@ -904,7 +879,7 @@ export default function Home() {
               )}
               {console.log("🔍 Main Page: Current user data:", currentUser)}
               <MatchesList
-                userId={currentUser.id}
+                currentUser={currentUser}
                 onUserSelect={(user) => {
                   // Convert backend user to profile format and show in modal
                   const profile = convertBackendUserToProfile(user);
@@ -1052,133 +1027,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Algorithms Health Check */}
-                <div className="bg-white p-6 rounded-lg shadow-md border">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                    Algorithms Health Check
-                  </h2>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        {algorithmsStatus === "checking" && (
-                          <>
-                            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-                            <span className="text-blue-600 font-medium">
-                              Testing Algorithms...
-                            </span>
-                          </>
-                        )}
-                        {algorithmsStatus === "online" && (
-                          <>
-                            <CheckCircle className="w-5 h-5 text-green-500" />
-                            <span className="text-green-600 font-medium">
-                              Algorithms Working
-                            </span>
-                          </>
-                        )}
-                        {algorithmsStatus === "offline" && (
-                          <>
-                            <XCircle className="w-5 h-5 text-red-500" />
-                            <span className="text-red-600 font-medium">
-                              Algorithms Error
-                            </span>
-                          </>
-                        )}
-                        {algorithmsStatus === null && (
-                          <>
-                            <div className="w-5 h-5 rounded-full bg-gray-300" />
-                            <span className="text-gray-600 font-medium">
-                              Not Tested
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      {algorithmsLastChecked && (
-                        <span className="text-sm text-gray-500">
-                          Last tested:{" "}
-                          {algorithmsLastChecked.toLocaleTimeString()}
-                        </span>
-                      )}
-                    </div>
-                    <Button
-                      onClick={checkAlgorithmsHealth}
-                      disabled={algorithmsStatus === "checking"}
-                      className="bg-purple-500 hover:bg-purple-600 text-white disabled:opacity-50"
-                    >
-                      <RefreshCw
-                        className={`w-4 h-4 mr-2 ${
-                          algorithmsStatus === "checking" ? "animate-spin" : ""
-                        }`}
-                      />
-                      Test Algorithms
-                    </Button>
-                  </div>
-
-                  {/* Algorithms Test Results */}
-                  {algorithmsDetails && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-medium text-gray-700 mb-2">
-                        Test Results:
-                      </h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">
-                            Normalize Hobbies:
-                          </span>
-                          <span
-                            className={`font-medium ${
-                              algorithmsDetails.tests?.normalizeHobbies?.success
-                                ? "text-green-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {algorithmsDetails.tests?.normalizeHobbies?.success
-                              ? "✓ Pass"
-                              : "✗ Fail"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Match Users:</span>
-                          <span
-                            className={`font-medium ${
-                              algorithmsDetails.tests?.matchUsers?.success
-                                ? "text-green-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {algorithmsDetails.tests?.matchUsers?.success
-                              ? "✓ Pass"
-                              : "✗ Fail"}
-                          </span>
-                        </div>
-                        {algorithmsDetails.tests?.normalizeHobbies?.output && (
-                          <div className="mt-2">
-                            <span className="text-gray-600">
-                              Sample Output:
-                            </span>
-                            <pre className="text-xs bg-white p-2 rounded mt-1 overflow-x-auto">
-                              {JSON.stringify(
-                                algorithmsDetails.tests.normalizeHobbies.output,
-                                null,
-                                2
-                              )}
-                            </pre>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mt-4 text-sm text-gray-600">
-                    <p>
-                      This will test the algorithms module including hobby
-                      normalization and user matching at{" "}
-                      <code className="bg-gray-200 px-2 py-1 rounded">
-                        http://localhost:6767/api/users/health/algorithms
-                      </code>
-                    </p>
-                  </div>
-                </div>
+                {/* Algorithms Health Check removed */}
 
                 {/* Test Data Import Section */}
                 <div className="bg-gray-50 rounded-lg p-6">
