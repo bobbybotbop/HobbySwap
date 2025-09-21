@@ -59,11 +59,28 @@ export interface SemanticMatchResponse {
 class ApiService {
   // Get user by NetID
   async getUserByNetId(netId: string) {
+    console.log("🔍 API: getUserByNetId - netId:", netId);
+    console.log(
+      "🔍 API: getUserByNetId - URL:",
+      `${API_BASE_URL}/netid/${netId}`
+    );
+
     const response = await fetch(`${API_BASE_URL}/netid/${netId}`);
+
+    console.log("📊 API: getUserByNetId - Response status:", response.status);
+    console.log("📊 API: getUserByNetId - Response ok:", response.ok);
+
     if (!response.ok) {
-      throw new Error("Failed to fetch user");
+      const errorText = await response.text();
+      console.error("❌ API: getUserByNetId - Error response:", errorText);
+      throw new Error(
+        `Failed to fetch user: ${response.status} ${response.statusText} - ${errorText}`
+      );
     }
-    return response.json();
+
+    const data = await response.json();
+    console.log("✅ API: getUserByNetId - Success, data:", data);
+    return data;
   }
 
   // Update personal information
@@ -202,6 +219,66 @@ class ApiService {
       console.error("❌ API: getSemanticMatches - Error:", error);
       throw error;
     }
+  }
+
+  // Add user to favorites
+  async addFavorite(userId: string, favoriteUserId: string) {
+    const response = await fetch(`${API_BASE_URL}/${userId}/favorites`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ favoriteUserId }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to add favorite");
+    }
+
+    return response.json();
+  }
+
+  // Remove user from favorites
+  async removeFavorite(userId: string, favoriteUserId: string) {
+    const response = await fetch(`${API_BASE_URL}/${userId}/favorites`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ favoriteUserId }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to remove favorite");
+    }
+
+    return response.json();
+  }
+
+  // Get user's favorites
+  async getFavorites(userId: string) {
+    console.log("🔍 API: getFavorites - userId:", userId);
+    console.log(
+      "🔍 API: getFavorites - URL:",
+      `${API_BASE_URL}/${userId}/favorites`
+    );
+
+    const response = await fetch(`${API_BASE_URL}/${userId}/favorites`);
+
+    console.log("📊 API: getFavorites - Response status:", response.status);
+    console.log("📊 API: getFavorites - Response ok:", response.ok);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("❌ API: getFavorites - Error response:", errorText);
+      throw new Error(
+        `Failed to fetch favorites: ${response.status} ${response.statusText} - ${errorText}`
+      );
+    }
+
+    const data = await response.json();
+    console.log("✅ API: getFavorites - Success, data:", data);
+    return data;
   }
 }
 

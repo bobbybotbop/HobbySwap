@@ -11,6 +11,9 @@ import {
   updateUserHobbies,
   updateUserHobbiesWant,
   getAIMatches,
+  addFavorite,
+  removeFavorite,
+  getFavorites,
 } from "../controllers/userController";
 import { uploadProfileImage } from "../controllers/imageController";
 import { upload } from "../services/imageService";
@@ -89,6 +92,11 @@ router.patch("/password", updatePassword); // PATCH /api/users/password
 router.patch("/:id", updateUserPersonalInformation); // PATCH /api/users/123 (general update)
 router.patch("/updateHobbies/:id", updateUserHobbies);
 router.patch("/updateHobbiesToLearn/:id", updateUserHobbiesWant);
+
+// Favorites routes
+router.post("/:userId/favorites", addFavorite); // POST /api/users/123/favorites
+router.delete("/:userId/favorites", removeFavorite); // DELETE /api/users/123/favorites
+router.get("/:userId/favorites", getFavorites); // GET /api/users/123/favorites
 
 // POST routes for file uploads
 router.post("/upload-image", upload.single("image"), uploadProfileImage); // POST /api/users/upload-image

@@ -165,11 +165,37 @@ export default function Home() {
   const [saveMessage, setSaveMessage] = useState("");
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favoriteProfiles, setFavoriteProfiles] = useState<Profile[]>([]);
 
   // Automatically load backend users on component mount
   useEffect(() => {
     fetchUsersFromBackend();
   }, []);
+
+  // Load favorites when current user changes
+  useEffect(() => {
+    if (currentUser.id && currentUser.id !== "0") {
+      loadFavorites();
+    } else if (currentUser.netID === "jd123") {
+      // Default user - just initialize empty favorites
+      console.log("ℹ️ Using default user, initializing empty favorites");
+      setFavorites([]);
+      setFavoriteProfiles([]);
+    }
+  }, [currentUser.id, currentUser.netID]);
+
+  // Refresh favorites when switching to Favorites tab
+  useEffect(() => {
+    if (activeTab === "Favorites" && currentUser.id && currentUser.id !== "0") {
+      loadFavorites();
+    } else if (activeTab === "Favorites" && currentUser.netID === "jd123") {
+      // Default user - just initialize empty favorites
+      console.log("ℹ️ Using default user, initializing empty favorites");
+      setFavorites([]);
+      setFavoriteProfiles([]);
+    }
+  }, [activeTab, currentUser.id, currentUser.netID]);
 
   // Check for stored user data on component mount
   useEffect(() => {
@@ -410,6 +436,7 @@ export default function Home() {
               };
               hobbies?: string[];
               hobbiesWantToLearn?: string[];
+              usersFavorited?: string[];
             },
             index: number
           ) => {
@@ -441,6 +468,7 @@ export default function Home() {
               bio: `Hi! I'm ${user.personalInformation.name} and I love sharing hobbies!`,
               instagram: user.personalInformation.instagram || "",
               email: `${user.personalInformation.netid}@example.com`,
+              usersFavorited: user.usersFavorited || [],
             };
 
             console.log(`   🖼️ Final Image: ${profile.image}`);
@@ -462,6 +490,128 @@ export default function Home() {
     } catch (error) {
       console.error("❌ Error fetching users from backend:", error);
       return [];
+    }
+  };
+
+  // Load user's favorites
+  const loadFavorites = async () => {
+    try {
+      console.log("⭐ Loading favorites for user:", currentUser.id);
+      console.log("⭐ Current user netID:", currentUser.netID);
+
+      // Check if we have a valid MongoDB ObjectId
+      if (!currentUser.id || currentUser.id === "0") {
+        console.log("⚠️ No valid user ID, trying to get user by NetID");
+        try {
+          const backendUser = await apiService.getUserByNetId(
+            currentUser.netID
+          );
+          console.log("✅ Found user by NetID:", backendUser);
+
+          // Update current user with the correct ID
+          updateCurrentUser({ id: backendUser._id });
+
+          // Now try to load favorites with the correct ID
+          const response = await apiService.getFavorites(backendUser._id);
+          console.log("⭐ Favorites response:", response);
+
+          const favoriteUserIds = response.favorites.map(
+            (user: any) => user._id
+          );
+          setFavorites(favoriteUserIds);
+
+          // Convert favorite users to Profile format
+          const convertedFavorites: Profile[] = response.favorites.map(
+            (user: any) => convertBackendUserToProfile(user)
+          );
+          setFavoriteProfiles(convertedFavorites);
+
+          console.log("⭐ Loaded favorites:", favoriteUserIds);
+        } catch (netIdError: any) {
+          console.error("❌ Error getting user by NetID:", netIdError);
+
+          // If user doesn't exist in database, that's okay - they just have no favorites yet
+          if (
+            netIdError.message.includes("404") ||
+            netIdError.message.includes("User not found")
+          ) {
+            console.log(
+              "ℹ️ User not found in database, initializing empty favorites"
+            );
+            setFavorites([]);
+            setFavoriteProfiles([]);
+          } else {
+            // For other errors, still set empty state but log the error
+            setFavorites([]);
+            setFavoriteProfiles([]);
+          }
+        }
+        return;
+      }
+
+      const response = await apiService.getFavorites(currentUser.id);
+      console.log("⭐ Favorites response:", response);
+
+      const favoriteUserIds = response.favorites.map((user: any) => user._id);
+      setFavorites(favoriteUserIds);
+
+      // Convert favorite users to Profile format
+      const convertedFavorites: Profile[] = response.favorites.map(
+        (user: any) => convertBackendUserToProfile(user)
+      );
+      setFavoriteProfiles(convertedFavorites);
+
+      console.log("⭐ Loaded favorites:", favoriteUserIds);
+    } catch (error) {
+      console.error("❌ Error loading favorites:", error);
+      setFavorites([]);
+      setFavoriteProfiles([]);
+    }
+  };
+
+  // Handle favorite toggle
+  const handleFavoriteToggle = async (
+    profileId: string,
+    isFavorited: boolean
+  ) => {
+    try {
+      let userId = currentUser.id;
+
+      // If we don't have a valid ID, get it from the backend
+      if (!userId || userId === "0") {
+        try {
+          const backendUser = await apiService.getUserByNetId(
+            currentUser.netID
+          );
+          userId = backendUser._id;
+          updateCurrentUser({ id: userId });
+        } catch (netIdError: any) {
+          console.error(
+            "❌ Error getting user by NetID in handleFavoriteToggle:",
+            netIdError
+          );
+
+          // If user doesn't exist in database, we can't add favorites
+          if (
+            netIdError.message.includes("404") ||
+            netIdError.message.includes("User not found")
+          ) {
+            console.log("ℹ️ User not found in database, cannot add favorites");
+            alert("Please log in or create an account to add favorites.");
+            return;
+          } else {
+            throw netIdError; // Re-throw other errors
+          }
+        }
+      }
+
+      if (isFavorited) {
+        setFavorites((prev) => [...prev, profileId]);
+      } else {
+        setFavorites((prev) => prev.filter((id) => id !== profileId));
+      }
+    } catch (error) {
+      console.error("❌ Error in handleFavoriteToggle:", error);
     }
   };
 
@@ -865,7 +1015,13 @@ export default function Home() {
             <div className="grid grid-cols-3 gap-6">
               {filterProfiles(useBackendData ? backendProfiles : profiles).map(
                 (profile) => (
-                  <ProfileCard key={profile.id} profile={profile} />
+                  <ProfileCard
+                    key={profile.id}
+                    profile={profile}
+                    currentUserId={currentUser.id}
+                    isFavorited={favorites.includes(profile.id)}
+                    onFavoriteToggle={handleFavoriteToggle}
+                  />
                 )
               )}
             </div>
@@ -891,23 +1047,47 @@ export default function Home() {
           )}
 
           {activeTab === "Favorites" && (
-            <div className="flex flex-col items-center justify-center h-full">
-              <div className="text-center">
-                <Star className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-                <h2 className="text-2xl font-semibold text-gray-600 mb-2">
-                  No Favorites Yet
-                </h2>
-                <p className="text-gray-500 mb-6">
-                  Start adding profiles to your favorites to see them here
-                </p>
-                <Button
-                  onClick={() => setActiveTab("Search")}
-                  className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
-                >
-                  Browse Profiles
-                </Button>
-              </div>
-            </div>
+            <>
+              {favoriteProfiles.length > 0 ? (
+                <div className="grid grid-cols-3 gap-6">
+                  {favoriteProfiles.map((profile) => (
+                    <ProfileCard
+                      key={profile.id}
+                      profile={profile}
+                      currentUserId={currentUser.id}
+                      isFavorited={true}
+                      onFavoriteToggle={async (profileId, isFavorited) => {
+                        await handleFavoriteToggle(profileId, isFavorited);
+                        // Remove from favorites list when unfavorited
+                        if (!isFavorited) {
+                          setFavoriteProfiles((prev) =>
+                            prev.filter((p) => p.id !== profileId)
+                          );
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="text-center">
+                    <Star className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+                    <h2 className="text-2xl font-semibold text-gray-600 mb-2">
+                      No Favorites Yet
+                    </h2>
+                    <p className="text-gray-500 mb-6">
+                      Start adding profiles to your favorites to see them here
+                    </p>
+                    <Button
+                      onClick={() => setActiveTab("Search")}
+                      className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                    >
+                      Browse Profiles
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {activeTab === "Sent" && (

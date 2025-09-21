@@ -9,4 +9,5 @@ export interface Profile {
   bio: string;
   instagram: string;
   email: string;
+  usersFavorited?: string[];
 }

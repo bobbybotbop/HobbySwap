@@ -2,13 +2,43 @@ import React, { useState } from "react";
 import { MapPin, Star, BookOpen, ArrowRight } from "lucide-react";
 import { Profile } from "@/types/profile";
 import ProfileModal from "./ProfileModal";
+import { apiService } from "@/lib/api";
 
 interface ProfileCardProps {
   profile: Profile;
+  currentUserId?: string;
+  isFavorited?: boolean;
+  onFavoriteToggle?: (profileId: string, isFavorited: boolean) => Promise<void>;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({
+  profile,
+  currentUserId,
+  isFavorited = false,
+  onFavoriteToggle,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFavoriting, setIsFavoriting] = useState(false);
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    if (!onFavoriteToggle || isFavoriting) return;
+
+    setIsFavoriting(true);
+    try {
+      if (isFavorited) {
+        await apiService.removeFavorite(currentUserId || "", profile.id);
+        await onFavoriteToggle(profile.id, false);
+      } else {
+        await apiService.addFavorite(currentUserId || "", profile.id);
+        await onFavoriteToggle(profile.id, true);
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    } finally {
+      setIsFavoriting(false);
+    }
+  };
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 w-full max-w-md border border-gray-100 overflow-hidden">
       {/* Full Width Image with Overlay */}
@@ -20,6 +50,24 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
         />
         {/* Dark gradient overlay for better text readability */}
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+        {/* Star Icon - Top Right */}
+        {currentUserId && (
+          <button
+            onClick={handleFavoriteClick}
+            disabled={isFavoriting}
+            className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 ${
+              isFavorited
+                ? "bg-yellow-500 text-white shadow-lg"
+                : "bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm"
+            } ${
+              isFavoriting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+            }`}
+            title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+          >
+            <Star className={`w-5 h-5 ${isFavorited ? "fill-current" : ""}`} />
+          </button>
+        )}
 
         {/* Name and Location Overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-4">

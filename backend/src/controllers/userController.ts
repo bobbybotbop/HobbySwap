@@ -355,6 +355,141 @@ export const updateUserHobbiesWant = async (
   }
 };
 
+// Add user to favorites
+export const addFavorite = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { favoriteUserId } = req.body;
+
+    if (!favoriteUserId) {
+      res.status(400).json({ message: "Favorite user ID is required" });
+      return;
+    }
+
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    // Check if favorite user exists
+    const favoriteUser = await User.findById(favoriteUserId);
+    if (!favoriteUser) {
+      res.status(404).json({ message: "Favorite user not found" });
+      return;
+    }
+
+    // Check if already favorited
+    if (user.usersFavorited.includes(favoriteUserId)) {
+      res.status(409).json({ message: "User already in favorites" });
+      return;
+    }
+
+    // Add to favorites
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $push: { usersFavorited: favoriteUserId } },
+      { new: true }
+    ).select("-personalInformation.encryptedPassword");
+
+    res.status(200).json({
+      message: "User added to favorites successfully",
+      usersFavorited: updatedUser?.usersFavorited,
+    });
+  } catch (error: any) {
+    console.error("Error adding favorite:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Remove user from favorites
+export const removeFavorite = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { favoriteUserId } = req.body;
+
+    if (!favoriteUserId) {
+      res.status(400).json({ message: "Favorite user ID is required" });
+      return;
+    }
+
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    // Remove from favorites
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { usersFavorited: favoriteUserId } },
+      { new: true }
+    ).select("-personalInformation.encryptedPassword");
+
+    res.status(200).json({
+      message: "User removed from favorites successfully",
+      usersFavorited: updatedUser?.usersFavorited,
+    });
+  } catch (error: any) {
+    console.error("Error removing favorite:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get user's favorites
+export const getFavorites = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    console.log("🔍 getFavorites: userId from params:", userId);
+
+    const user = await User.findById(userId).select(
+      "-personalInformation.encryptedPassword"
+    );
+
+    console.log("🔍 getFavorites: user found:", !!user);
+    if (user) {
+      console.log("🔍 getFavorites: user.usersFavorited:", user.usersFavorited);
+    }
+
+    if (!user) {
+      console.log("❌ getFavorites: User not found for userId:", userId);
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    // Get full user details for favorited users
+    const favoriteUsers = await User.find({
+      _id: { $in: user.usersFavorited },
+    }).select("-personalInformation.encryptedPassword");
+
+    console.log(
+      "✅ getFavorites: Found",
+      favoriteUsers.length,
+      "favorite users"
+    );
+
+    res.status(200).json({
+      message: "Favorites retrieved successfully",
+      favorites: favoriteUsers,
+      totalCount: favoriteUsers.length,
+    });
+  } catch (error: any) {
+    console.error("❌ getFavorites: Error occurred:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // ===== AI-POWERED HOBBY MATCHING =====
 
 interface HobbyMatch {

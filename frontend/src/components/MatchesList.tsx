@@ -264,7 +264,7 @@ export default function MatchesList({
             </div>
           )}
 
-          <div className="mt-4 text-sm text-gray-500">
+          {/* <div className="mt-4 text-sm text-gray-500">
             <p>Debug info:</p>
             <p>• Current user: {currentUser?.name || "None"}</p>
             <p>• User ID: {currentUser?.id || "None"}</p>
@@ -278,7 +278,7 @@ export default function MatchesList({
               • Last fetched:{" "}
               {lastFetched ? lastFetched.toLocaleTimeString() : "Never"}
             </p>
-          </div>
+          </div> */}
         </div>
       )}
     </div>
