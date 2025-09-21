@@ -34,8 +34,9 @@ app.use((req, res, next) => {
   }
 });
 
-// Middleware to parse JSON
-app.use(express.json());
+// Middleware to parse JSON with increased limit for large uploads
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Mount routes
 app.use("/api/users", userRoute);

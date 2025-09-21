@@ -34,6 +34,7 @@ import {
 import { SmileSquare, Star, CogFour, Send, Inbox } from "@mynaui/icons-react";
 import ProfileCard from "@/components/ProfileCard";
 import MatchesList from "@/components/MatchesList";
+import ProfileModal from "@/components/ProfileModal";
 import { Profile } from "@/types/profile";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -157,6 +158,8 @@ export default function Home() {
     "idle"
   );
   const [saveMessage, setSaveMessage] = useState("");
+  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Automatically load backend users on component mount
   useEffect(() => {
@@ -827,8 +830,8 @@ export default function Home() {
           )}
 
           {activeTab === "Matches" && (
-            <MatchesList 
-              userId={currentUser.id} 
+            <MatchesList
+              userId={currentUser.id.toString()}
               onUserSelect={(user) => {
                 // Convert backend user to profile format and show in modal
                 const profile = convertBackendUserToProfile(user);
@@ -1454,6 +1457,18 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Profile Modal */}
+      {selectedProfile && (
+        <ProfileModal
+          profile={selectedProfile}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedProfile(null);
+          }}
+        />
+      )}
     </div>
   );
 }

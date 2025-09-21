@@ -92,13 +92,20 @@ export const updatePassword = async (
       return;
     }
 
-    const hashedPassword = bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     const updatedUser = await User.findByIdAndUpdate(
       id,
-      { password: hashedPassword },
+      { "personalInformation.encryptedPassword": hashedPassword },
       { new: true }
     ).select("-personalInformation.encryptedPassword");
+
+    if (!updatedUser) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    res.status(200).json({ message: "Password updated successfully" });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
