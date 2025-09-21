@@ -190,6 +190,11 @@ const generateProfiles = async () => {
 function HomeContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("Search");
+  
+  // Debug activeTab changes
+  useEffect(() => {
+    console.log("🔍 Main Page: activeTab changed to:", activeTab);
+  }, [activeTab]);
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const [age, setAge] = useState("");

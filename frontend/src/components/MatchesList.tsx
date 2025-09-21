@@ -24,6 +24,8 @@ interface MatchesListProps {
 export default function MatchesList({
   currentUser,
 }: MatchesListProps) {
+  console.log("🔍 MatchesList: Component rendered with currentUser:", currentUser);
+  
   const [matches, setMatches] = useState<SemanticMatch[]>([]);
   const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState<"score" | "name">("score");
@@ -37,6 +39,7 @@ export default function MatchesList({
   // Fetch semantic search matches with caching
   const fetchMatches = useCallback(
     async (forceRefresh = false) => {
+      console.log("🔄 fetchMatches called with forceRefresh:", forceRefresh);
       if (!currentUser || !currentUser.id) {
         console.log("🔍 MatchesList: No currentUser provided, skipping fetch");
         return;
@@ -75,7 +78,7 @@ export default function MatchesList({
         setLoading(false);
       }
     },
-    [currentUser, matches.length, lastFetched]
+    [currentUser]
   );
 
   // Remove auto-fetch to prevent infinite loading
@@ -125,6 +128,9 @@ export default function MatchesList({
   });
 
   const handleRefresh = () => {
+    console.log("🔄 MatchesList: Refresh button clicked");
+    console.log("🔄 MatchesList: Current user:", currentUser);
+    console.log("🔄 MatchesList: Loading state:", loading);
     fetchMatches(true);
   };
 

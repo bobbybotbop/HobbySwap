@@ -688,10 +688,21 @@ export const getAIMatches = async (
       hobbiesWantToLearn: currentUser.hobbiesWantToLearn?.length || 0,
     });
 
-    // Get all other users
-    const allUsers = await User.find({ _id: { $ne: currentUser._id } }).select(
-      "-personalInformation.encryptedPassword"
-    );
+    // Get all other users (handle both ObjectId and string IDs)
+    let allUsers;
+    try {
+      // Try to use as ObjectId first
+      allUsers = await User.find({ _id: { $ne: currentUser._id } }).select(
+        "-personalInformation.encryptedPassword"
+      );
+    } catch (error) {
+      // If ObjectId fails, get all users and filter manually
+      console.log("⚠️ getAIMatches: ObjectId query failed, using manual filtering");
+      const allUsersRaw = await User.find({}).select(
+        "-personalInformation.encryptedPassword"
+      );
+      allUsers = allUsersRaw.filter(user => (user._id as any).toString() !== currentUser._id);
+    }
 
     console.log(`👥 getAIMatches: Found ${allUsers.length} other users`);
 
