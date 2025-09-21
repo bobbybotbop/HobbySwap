@@ -31,14 +31,15 @@ const SentRequests: React.FC<SentRequestsProps> = ({ userId }) => {
               location: "West"
             }
           },
+          senderId: "current_user",
           selectedDate: "2025-01-25",
           selectedTime: "16:00",
           duration: 60,
           message: "Hi! I'd love to learn basketball from you!",
           location: "Central Campus",
           status: "pending",
-          createdAt: new Date(),
-          updatedAt: new Date()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         },
         {
           _id: "demo_sent_002",
@@ -50,14 +51,15 @@ const SentRequests: React.FC<SentRequestsProps> = ({ userId }) => {
               location: "North"
             }
           },
+          senderId: "current_user",
           selectedDate: "2025-01-26",
           selectedTime: "14:00",
           duration: 90,
           message: "Would you like to teach me yoga?",
           location: "North Campus",
           status: "accepted",
-          createdAt: new Date(),
-          updatedAt: new Date()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }
       ]);
     } catch (err: unknown) {

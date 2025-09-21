@@ -31,14 +31,15 @@ const ReceivedRequests: React.FC<ReceivedRequestsProps> = ({ userId }) => {
               location: "Central"
             }
           },
+          receiverId: "current_user",
           selectedDate: "2025-01-27",
           selectedTime: "10:00",
           duration: 120,
           message: "I'd love to learn swimming from you!",
           location: "West Campus",
           status: "pending",
-          createdAt: new Date(),
-          updatedAt: new Date()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         },
         {
           _id: "demo_received_002",
@@ -50,14 +51,15 @@ const ReceivedRequests: React.FC<ReceivedRequestsProps> = ({ userId }) => {
               location: "Off Campus"
             }
           },
+          receiverId: "current_user",
           selectedDate: "2025-01-28",
           selectedTime: "15:30",
           duration: 75,
           message: "Can you teach me how to bake?",
           location: "North Campus",
           status: "accepted",
-          createdAt: new Date(),
-          updatedAt: new Date()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }
       ]);
     } catch (err: unknown) {

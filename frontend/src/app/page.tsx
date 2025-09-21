@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiService } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -187,7 +187,7 @@ const generateProfiles = async () => {
 
 // This will be handled by the generateProfiles function
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("Search");
   const [searchQuery, setSearchQuery] = useState("");
@@ -1685,5 +1685,13 @@ export default function Home() {
         />
       )}
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
