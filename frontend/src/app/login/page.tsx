@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Lock, Mail, Eye, EyeOff, Upload, X } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Profile } from "@/types/profile";
 
@@ -109,7 +109,7 @@ export default function LoginPage() {
         // Redirect to main page after successful login
         setTimeout(() => {
           router.push("/?tab=For You");
-        }, 2000);
+        }, 1000);
       } else {
         setError("Failed to retrieve user data");
       }
@@ -239,7 +239,7 @@ export default function LoginPage() {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-gray-600">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <button
               onClick={() => router.push("/register")}
               className="text-red-500 hover:text-red-600 font-medium"

@@ -17,10 +17,7 @@ import {
   ChevronDown,
   User,
   Mail,
-  Phone,
   MapPin,
-  Briefcase,
-  Tag,
   Plus,
   X,
   Upload,
@@ -191,7 +188,17 @@ export default function Home() {
   }, [replaceCurrentUser, searchParams]);
 
   // Function to convert backend user to Profile format
-  const convertBackendUserToProfile = (user: any): Profile => {
+  const convertBackendUserToProfile = (user: {
+    personalInformation: {
+      name: string;
+      location?: string;
+      image?: string;
+      netid: string;
+      instagram?: string;
+    };
+    hobbies?: string[];
+    hobbiesWantToLearn?: string[];
+  }): Profile => {
     return {
       id: 0, // Will be set to 0 for current user
       name: user.personalInformation.name,
@@ -371,7 +378,20 @@ export default function Home() {
 
         // Convert backend users to Profile format
         const convertedProfiles: Profile[] = backendUsers.map(
-          (user: any, index: number) => {
+          (
+            user: {
+              personalInformation: {
+                name: string;
+                location?: string;
+                image?: string;
+                netid: string;
+                instagram?: string;
+              };
+              hobbies?: string[];
+              hobbiesWantToLearn?: string[];
+            },
+            index: number
+          ) => {
             console.log(`🔄 Converting user ${index + 1}:`);
             console.log(`   📝 Name: ${user.personalInformation.name}`);
             console.log(`   🆔 NetID: ${user.personalInformation.netid}`);
@@ -1033,7 +1053,9 @@ export default function Home() {
                         • Test users will be created with NetIDs: marcus01,
                         sophia02, alex03, maya04, jordan05
                       </p>
-                      <p>• All test users have password: "password123"</p>
+                      <p>
+                        • All test users have password: &quot;password123&quot;
+                      </p>
                       <p>• If users already exist, they will be skipped</p>
                     </div>
 

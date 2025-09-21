@@ -4,15 +4,34 @@ import { useState, useEffect } from "react";
 import { apiService, Match } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Users, Star, ArrowRight, RefreshCw } from "lucide-react";
-import ProfileCard from "@/components/ProfileCard";
+import {
+  Search,
+  Loader2,
+  Users,
+  Star,
+  ArrowRight,
+  RefreshCw,
+} from "lucide-react";
 
 interface MatchesListProps {
   userId: string;
-  onUserSelect?: (user: any) => void;
+  onUserSelect?: (user: {
+    personalInformation: {
+      name: string;
+      location?: string;
+      image?: string;
+      netid: string;
+      instagram?: string;
+    };
+    hobbies?: string[];
+    hobbiesWantToLearn?: string[];
+  }) => void;
 }
 
-export default function MatchesList({ userId, onUserSelect }: MatchesListProps) {
+export default function MatchesList({
+  userId,
+  onUserSelect,
+}: MatchesListProps) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchHobby, setSearchHobby] = useState("");
@@ -23,7 +42,7 @@ export default function MatchesList({ userId, onUserSelect }: MatchesListProps) 
   // Fetch all matches
   const fetchMatches = async () => {
     if (!userId) return;
-    
+
     setLoading(true);
     try {
       const response = await apiService.getUserMatches(userId);
@@ -38,10 +57,13 @@ export default function MatchesList({ userId, onUserSelect }: MatchesListProps) 
   // Search for specific hobby teachers
   const searchHobbyTeachers = async () => {
     if (!userId || !searchHobby.trim()) return;
-    
+
     setSearchLoading(true);
     try {
-      const response = await apiService.searchHobbyTeachers(userId, searchHobby);
+      const response = await apiService.searchHobbyTeachers(
+        userId,
+        searchHobby
+      );
       setSearchResults(response.matches);
       setActiveTab("search");
     } catch (error) {
@@ -77,7 +99,8 @@ export default function MatchesList({ userId, onUserSelect }: MatchesListProps) 
               {match.user.personalInformation.name}
             </h3>
             <p className="text-sm text-gray-500">
-              {match.user.personalInformation.location || "Location not specified"}
+              {match.user.personalInformation.location ||
+                "Location not specified"}
             </p>
           </div>
         </div>
@@ -161,14 +184,18 @@ export default function MatchesList({ userId, onUserSelect }: MatchesListProps) 
           disabled={loading}
           className="flex items-center"
         >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+          />
           Refresh
         </Button>
       </div>
 
       {/* Search Section */}
       <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-3">Search for specific hobby teachers</h3>
+        <h3 className="font-semibold text-gray-900 mb-3">
+          Search for specific hobby teachers
+        </h3>
         <div className="flex space-x-2">
           <Input
             placeholder="Enter a hobby (e.g., guitar, cooking, photography)"
@@ -229,26 +256,29 @@ export default function MatchesList({ userId, onUserSelect }: MatchesListProps) 
         ) : (
           <div className="text-center py-12">
             <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No matches found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No matches found
+            </h3>
             <p className="text-gray-600">
               Try updating your hobbies or check back later for new users.
             </p>
           </div>
         )
+      ) : searchResults.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {searchResults.map((match, index) => renderMatchCard(match, index))}
+        </div>
       ) : (
-        searchResults.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {searchResults.map((match, index) => renderMatchCard(match, index))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No teachers found</h3>
-            <p className="text-gray-600">
-              No one can teach "{searchHobby}" yet. Try a different hobby or check back later.
-            </p>
-          </div>
-        )
+        <div className="text-center py-12">
+          <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            No teachers found
+          </h3>
+          <p className="text-gray-600">
+            No one can teach &quot;{searchHobby}&quot; yet. Try a different
+            hobby or check back later.
+          </p>
+        </div>
       )}
     </div>
   );
