@@ -2,12 +2,32 @@ import { Request, Response } from "express";
 import { User, InteractedUser } from "../models/userModel";
 import bcrypt from "bcrypt";
 
-// GET all users EXECEPT for encrypted password
+// GET all users EXCEPT for encrypted password
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
-    const users = await User.find({}).select("-encryptedPassword");
+    console.log("🔍 Fetching all users from database...");
+    const users = await User.find({}).select(
+      "-personalInformation.encryptedPassword"
+    );
+
+    console.log(`📊 Found ${users.length} users in database`);
+
+    // Debug each user's image
+    users.forEach((user, index) => {
+      console.log(`👤 User ${index + 1}:`);
+      console.log(`   📝 Name: ${user.personalInformation.name}`);
+      console.log(`   🆔 NetID: ${user.personalInformation.netid}`);
+      console.log(
+        `   🖼️ Image: ${user.personalInformation.image || "NO IMAGE"}`
+      );
+      console.log(
+        `   📍 Location: ${user.personalInformation.location || "NO LOCATION"}`
+      );
+    });
+
     res.status(200).json(users);
   } catch (error: any) {
+    console.error("❌ Error fetching users:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -35,8 +55,8 @@ export const verifyPassword = async (
   try {
     const { netid, password } = req.body; // client provides netid + password
 
-    const user = await User.findOne({ 
-      'personalInformation.netid': netid
+    const user = await User.findOne({
+      "personalInformation.netid": netid,
     });
     if (!user) {
       res.status(404).json({ message: "User not found" });
@@ -78,7 +98,7 @@ export const updatePassword = async (
       id,
       { password: hashedPassword },
       { new: true }
-    ).select("-encryptedPassword");
+    ).select("-personalInformation.encryptedPassword");
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
@@ -92,12 +112,22 @@ export const createUser = async (
   try {
     const { personalInformation, hobbies, hobbiesWantToLearn } = req.body;
 
+    // Debug logging
+    console.log("🔍 Creating user with data:");
+    console.log("📝 Name:", personalInformation.name);
+    console.log("🆔 NetID:", personalInformation.netid);
+    console.log("🖼️ Image URL:", personalInformation.image);
+    console.log("📍 Location:", personalInformation.location);
+    console.log("🎯 Hobbies:", hobbies);
+    console.log("📚 Hobbies to learn:", hobbiesWantToLearn);
+
     // Check if user already exists
     const existingUser = await User.findOne({
       "personalInformation.netid": personalInformation.netid,
-    }).select('-personalInformation.encryptedPassword');;
+    }).select("-personalInformation.encryptedPassword");
 
     if (existingUser) {
+      console.log("❌ User already exists:", personalInformation.netid);
       res.status(409).json({
         message: "User with this email already exists",
       });
@@ -117,9 +147,16 @@ export const createUser = async (
       hobbiesWantToLearn,
     });
 
+    console.log("💾 Saving user to database...");
     const savedUser = await newUser.save();
+
+    console.log("✅ User saved successfully!");
+    console.log("🆔 Saved user ID:", savedUser._id);
+    console.log("🖼️ Saved image URL:", savedUser.personalInformation.image);
+
     res.status(201).json({ message: "User created successfully" });
   } catch (error: any) {
+    console.error("❌ Error creating user:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -146,7 +183,7 @@ export const sendUser = async (req: Request, res: Response): Promise<void> => {
     // 3. Check if target user exists
     const targetUser = await User.findOne({
       "personalInformation.netid": netid,
-    }).select('-personalInformation.encryptedPassword');
+    }).select("-personalInformation.encryptedPassword");
 
     if (!targetUser) {
       res.status(404).json({ message: "Target user does not exist" });
@@ -220,10 +257,10 @@ export const getUserByNetId = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { netid } = req.body;
-    const user = await User.findOne({ 
-      'personalInformation.netid': netid // ✅ Correct field path
-    }).select('-personalInformation.encryptedPassword'); // ✅ Exclude password
+    const { netid } = req.params; // ✅ Get netid from URL params
+    const user = await User.findOne({
+      "personalInformation.netid": netid, // ✅ Correct field path
+    }).select("-personalInformation.encryptedPassword"); // ✅ Exclude password
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
@@ -247,7 +284,7 @@ export const updateUserPersonalInformation = async (
       id,
       { personalInformation: personalInformation },
       { new: true }
-    ).select("-encryptedPassword");
+    ).select("-personalInformation.encryptedPassword");
 
     res.status(200).json("Successfully updated personal information");
   } catch (error: any) {
@@ -267,7 +304,7 @@ export const updateUserHobbies = async (
       id,
       { hobbies: hobbies },
       { new: true }
-    ).select("-encryptedPassword");
+    ).select("-personalInformation.encryptedPassword");
 
     res.status(200).json("Successfully updated user hobbies");
   } catch (error: any) {
@@ -287,7 +324,7 @@ export const updateUserHobbiesWant = async (
       id,
       { hobbiesWantToLearn: hobbiesWantToLearn },
       { new: true }
-    ).select("-encryptedPassword");
+    ).select("-personalInformation.encryptedPassword");
 
     res.status(200).json("Successfully updated user new hobbies to learn");
   } catch (error: any) {

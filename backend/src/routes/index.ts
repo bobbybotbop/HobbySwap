@@ -16,24 +16,11 @@ const router = Router();
 
 // Health check route
 router.get("/health", (req: Request, res: Response) => {
-  // Disable CORS by allowing all origins
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "*");
-  res.header("Access-Control-Allow-Headers", "*");
-
   res.status(200).json({
     status: "OK",
     message: "Server is running",
     timestamp: new Date().toISOString(),
   });
-});
-
-// Handle preflight OPTIONS requests for health endpoint
-router.options("/health", (req: Request, res: Response) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "*");
-  res.header("Access-Control-Allow-Headers", "*");
-  res.status(200).end();
 });
 
 // API info route

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Profile } from "@/types/profile";
 
 // Example current user profile data
@@ -22,31 +22,36 @@ const initialCurrentUser: Profile = {
 export const useCurrentUser = () => {
   const [currentUser, setCurrentUser] = useState<Profile>(initialCurrentUser);
 
-  const updateCurrentUser = (updates: Partial<Profile>) => {
+  const updateCurrentUser = useCallback((updates: Partial<Profile>) => {
     setCurrentUser((prev) => ({
       ...prev,
       ...updates,
     }));
-  };
+  }, []);
 
-  const updateHobbiesKnown = (hobbies: string[]) => {
+  const updateHobbiesKnown = useCallback((hobbies: string[]) => {
     setCurrentUser((prev) => ({
       ...prev,
       hobbiesKnown: hobbies,
     }));
-  };
+  }, []);
 
-  const updateHobbiesWantToLearn = (hobbies: string[]) => {
+  const updateHobbiesWantToLearn = useCallback((hobbies: string[]) => {
     setCurrentUser((prev) => ({
       ...prev,
       hobbiesWantToLearn: hobbies,
     }));
-  };
+  }, []);
+
+  const replaceCurrentUser = useCallback((newUser: Profile) => {
+    setCurrentUser(newUser);
+  }, []);
 
   return {
     currentUser,
     updateCurrentUser,
     updateHobbiesKnown,
     updateHobbiesWantToLearn,
+    replaceCurrentUser,
   };
 };

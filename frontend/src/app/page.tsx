@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -127,6 +128,7 @@ const profiles: Profile[] = profilesData.map((profile, index) => ({
 }));
 
 export default function Home() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("For You");
   const [location, setLocation] = useState("");
   const [age, setAge] = useState("");
@@ -137,12 +139,76 @@ export default function Home() {
   const [showAddHobbyWantToLearn, setShowAddHobbyWantToLearn] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { currentUser, updateCurrentUser } = useCurrentUser();
+  const { currentUser, updateCurrentUser, replaceCurrentUser } =
+    useCurrentUser();
   const [profileLocation, setProfileLocation] = useState(currentUser.location);
   const [serverStatus, setServerStatus] = useState<
     "checking" | "online" | "offline" | null
   >(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  const [isImportingUsers, setIsImportingUsers] = useState(false);
+  const [importStatus, setImportStatus] = useState<string>("");
+  const [backendProfiles, setBackendProfiles] = useState<Profile[]>([]);
+  const [useBackendData, setUseBackendData] = useState(true);
+
+  // Automatically load backend users on component mount
+  useEffect(() => {
+    fetchUsersFromBackend();
+  }, []);
+
+  // Check for stored user data on component mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    const storedNetid = localStorage.getItem("netid");
+
+    if (storedUser && storedNetid) {
+      try {
+        const userProfile = JSON.parse(storedUser);
+        console.log("🔄 Loading stored user data:", userProfile);
+        replaceCurrentUser(userProfile);
+
+        // Check for tab parameter in URL
+        const tabParam = searchParams.get("tab");
+        if (tabParam) {
+          setActiveTab(tabParam);
+        } else {
+          setActiveTab("For You");
+        }
+      } catch (error) {
+        console.error("❌ Error parsing stored user data:", error);
+      }
+    }
+  }, [replaceCurrentUser, searchParams]);
+
+  // Function to convert backend user to Profile format
+  const convertBackendUserToProfile = (user: any): Profile => {
+    return {
+      id: 0, // Will be set to 0 for current user
+      name: user.personalInformation.name,
+      location: user.personalInformation.location || "Not specified",
+      image:
+        user.personalInformation.image ||
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
+      hobbiesKnown: user.hobbies || [],
+      hobbiesWantToLearn: user.hobbiesWantToLearn || [],
+      netID: user.personalInformation.netid,
+      bio: `Hi! I'm ${user.personalInformation.name} and I love sharing hobbies!`,
+      instagram: user.personalInformation.instagram || "",
+      email: `${user.personalInformation.netid}@example.com`,
+      socialMedia: {
+        instagram: user.personalInformation.instagram || "",
+      },
+    };
+  };
+
+  // Function to update current user from backend data
+  const updateCurrentUserFromBackend = (netid: string) => {
+    const user = backendProfiles.find((profile) => profile.netID === netid);
+    if (user) {
+      replaceCurrentUser(user);
+      setActiveTab("For You");
+    }
+  };
 
   const handleAddHobbyKnown = () => {
     if (newHobbyKnown.trim()) {
@@ -228,6 +294,221 @@ export default function Home() {
     } catch (error) {
       console.error("Health check failed:", error);
       setServerStatus("offline");
+    }
+  };
+
+  const fetchUsersFromBackend = async () => {
+    try {
+      console.log("🔍 Fetching users from backend...");
+      const response = await fetch("http://localhost:6767/api/users");
+
+      if (response.ok) {
+        const backendUsers = await response.json();
+        console.log("📊 Raw backend users data:", backendUsers);
+
+        // Convert backend users to Profile format
+        const convertedProfiles: Profile[] = backendUsers.map(
+          (user: any, index: number) => {
+            console.log(`🔄 Converting user ${index + 1}:`);
+            console.log(`   📝 Name: ${user.personalInformation.name}`);
+            console.log(`   🆔 NetID: ${user.personalInformation.netid}`);
+            console.log(
+              `   🖼️ Original Image: ${
+                user.personalInformation.image || "NO IMAGE"
+              }`
+            );
+            console.log(
+              `   📍 Location: ${
+                user.personalInformation.location || "NO LOCATION"
+              }`
+            );
+
+            const profile = {
+              id: index + 1,
+              name: user.personalInformation.name,
+              location: user.personalInformation.location || "Not specified",
+              image:
+                user.personalInformation.image ||
+                "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
+              hobbiesKnown: user.hobbies || [],
+              hobbiesWantToLearn: user.hobbiesWantToLearn || [],
+              netID: user.personalInformation.netid,
+              bio: `Hi! I'm ${user.personalInformation.name} and I love sharing hobbies!`,
+              instagram: user.personalInformation.instagram || "",
+              email: `${user.personalInformation.netid}@example.com`,
+              socialMedia: {
+                instagram: user.personalInformation.instagram || "",
+              },
+            };
+
+            console.log(`   🖼️ Final Image: ${profile.image}`);
+            return profile;
+          }
+        );
+
+        console.log("✅ Converted profiles:", convertedProfiles);
+        setBackendProfiles(convertedProfiles);
+        return convertedProfiles;
+      } else {
+        console.error(
+          "❌ Failed to fetch users from backend:",
+          response.status,
+          response.statusText
+        );
+        return [];
+      }
+    } catch (error) {
+      console.error("❌ Error fetching users from backend:", error);
+      return [];
+    }
+  };
+
+  // Test users data that matches the user model structure
+  const testUsers = [
+    {
+      personalInformation: {
+        netid: "marcus01",
+        name: "Marcus",
+        age: "Sophomore",
+        location: "West",
+        image:
+          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
+        instagram: "https://instagram.com/marcus_basketball",
+        encryptedPassword: "password123",
+      },
+      hobbies: ["Basketball", "Coding", "Gaming"],
+      hobbiesWantToLearn: ["Photography", "Cooking", "Guitar"],
+    },
+    {
+      personalInformation: {
+        netid: "sophia02",
+        name: "Sophia",
+        age: "Junior",
+        location: "North",
+        image:
+          "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=400&fit=crop",
+        instagram: "https://instagram.com/sophia_art",
+        encryptedPassword: "password123",
+      },
+      hobbies: ["Yoga", "Reading", "Painting"],
+      hobbiesWantToLearn: ["Rock Climbing", "Piano", "Languages"],
+    },
+    {
+      personalInformation: {
+        netid: "alex03",
+        name: "Alex",
+        age: "Freshman",
+        location: "Central",
+        image:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop",
+        instagram: "https://instagram.com/alex_swimmer",
+        encryptedPassword: "password123",
+      },
+      hobbies: ["Swimming", "Chess", "Writing"],
+      hobbiesWantToLearn: ["Dancing", "Woodworking", "Astronomy"],
+    },
+    {
+      personalInformation: {
+        netid: "maya04",
+        name: "Maya",
+        age: "Senior",
+        location: "Off Campus",
+        image:
+          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=400&fit=crop",
+        instagram: "https://instagram.com/maya_gardens",
+        encryptedPassword: "password123",
+      },
+      hobbies: ["Running", "Baking", "Gardening"],
+      hobbiesWantToLearn: ["Violin", "Pottery", "Meditation"],
+    },
+    {
+      personalInformation: {
+        netid: "jordan05",
+        name: "Jordan",
+        age: "Graduate",
+        location: "West",
+        image:
+          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=400&fit=crop",
+        instagram: "https://instagram.com/jordan_travels",
+        encryptedPassword: "password123",
+      },
+      hobbies: ["Tennis", "Drawing", "Travel"],
+      hobbiesWantToLearn: ["Skiing", "Digital Art", "Calligraphy"],
+    },
+  ];
+
+  const importTestUsers = async () => {
+    setIsImportingUsers(true);
+    setImportStatus("Starting import...");
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    console.log("🚀 Starting import of test users...");
+    console.log("📊 Test users data:", testUsers);
+
+    try {
+      for (let i = 0; i < testUsers.length; i++) {
+        const user = testUsers[i];
+
+        console.log(`📤 Importing user ${i + 1}/${testUsers.length}:`);
+        console.log(`   📝 Name: ${user.personalInformation.name}`);
+        console.log(`   🆔 NetID: ${user.personalInformation.netid}`);
+        console.log(`   🖼️ Image URL: ${user.personalInformation.image}`);
+        console.log(`   📍 Location: ${user.personalInformation.location}`);
+
+        setImportStatus(
+          `Importing ${user.personalInformation.name} (${i + 1}/${
+            testUsers.length
+          })...`
+        );
+
+        try {
+          const response = await fetch("http://localhost:6767/api/users", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(user),
+          });
+
+          if (response.ok) {
+            console.log(
+              `✅ Successfully imported ${user.personalInformation.name}`
+            );
+            successCount++;
+          } else {
+            const data = await response.json();
+            console.error(
+              `❌ Failed to import ${user.personalInformation.name}:`,
+              data.message
+            );
+            errorCount++;
+          }
+        } catch (error) {
+          console.error(
+            `❌ Error importing ${user.personalInformation.name}:`,
+            error
+          );
+          errorCount++;
+        }
+
+        // Small delay between requests to avoid overwhelming the server
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      setImportStatus(
+        `Import complete! ${successCount} users imported successfully, ${errorCount} failed.`
+      );
+    } catch (error) {
+      console.error("Import process failed:", error);
+      setImportStatus(
+        "Import process failed. Please check the console for details."
+      );
+    } finally {
+      setIsImportingUsers(false);
+      // Clear status after 5 seconds
+      setTimeout(() => setImportStatus(""), 5000);
     }
   };
 
@@ -445,7 +726,7 @@ export default function Home() {
         >
           {activeTab === "For You" && (
             <div className="grid grid-cols-3 gap-6">
-              {profiles.map((profile) => (
+              {(useBackendData ? backendProfiles : profiles).map((profile) => (
                 <ProfileCard key={profile.id} profile={profile} />
               ))}
             </div>
@@ -588,14 +869,111 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Additional Settings Placeholder */}
+                {/* Test Data Import Section */}
                 <div className="bg-gray-50 rounded-lg p-6">
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    Additional Settings
+                    Test Data Management
                   </h2>
-                  <p className="text-gray-500">
-                    More settings options will be added here in future updates.
-                  </p>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium text-gray-900">
+                          Import Test Users
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Import sample users (Marcus, Sophia, Alex, Maya,
+                          Jordan) into the database
+                        </p>
+                      </div>
+                      <Button
+                        onClick={importTestUsers}
+                        disabled={isImportingUsers}
+                        className="bg-green-500 hover:bg-green-600 text-white disabled:opacity-50"
+                      >
+                        {isImportingUsers ? (
+                          <div className="flex items-center">
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Importing...
+                          </div>
+                        ) : (
+                          <div className="flex items-center">
+                            <Upload className="w-4 h-4 mr-2" />
+                            Import Test Users
+                          </div>
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* Import Status */}
+                    {importStatus && (
+                      <div
+                        className={`p-3 rounded-lg text-sm ${
+                          importStatus.includes("complete")
+                            ? "bg-green-100 text-green-700 border border-green-200"
+                            : importStatus.includes("failed")
+                            ? "bg-red-100 text-red-700 border border-red-200"
+                            : "bg-blue-100 text-blue-700 border border-blue-200"
+                        }`}
+                      >
+                        {importStatus}
+                      </div>
+                    )}
+
+                    <div className="text-xs text-gray-400">
+                      <p>
+                        • Test users will be created with NetIDs: marcus01,
+                        sophia02, alex03, maya04, jordan05
+                      </p>
+                      <p>• All test users have password: "password123"</p>
+                      <p>• If users already exist, they will be skipped</p>
+                    </div>
+
+                    {useBackendData ? (
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            Switch to Static Data
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            Use the default static profile data instead of
+                            backend data
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => setUseBackendData(false)}
+                          className="bg-gray-500 hover:bg-gray-600 text-white"
+                        >
+                          <div className="flex items-center">
+                            <XCircle className="w-4 h-4 mr-2" />
+                            Use Static Data
+                          </div>
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            Switch to Backend Data
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            Use users from the database (default)
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => {
+                            setUseBackendData(true);
+                            fetchUsersFromBackend();
+                          }}
+                          className="bg-blue-500 hover:bg-blue-600 text-white"
+                        >
+                          <div className="flex items-center">
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Use Backend Data
+                          </div>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
