@@ -1,37 +1,38 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { apiService, SemanticMatch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, RefreshCw, SortAsc, Star } from "lucide-react";
+import { Loader2, RefreshCw, SortAsc, Star } from "lucide-react";
 import ProfileCard from "@/components/ProfileCard";
 import { Profile } from "@/types/profile";
 
 interface MatchesListProps {
-  currentUser: any;
-  onUserSelect?: (user: {
-    _id: string;
+  currentUser: {
+    id: string;
     name: string;
-    personalInformation: {
-      name: string;
-      image?: string;
-      location?: string;
-      bio?: string;
-      netid: string;
-      instagram?: string;
-    };
-  }) => void;
+    image?: string;
+    location?: string;
+    bio?: string;
+    netID: string;
+    instagram?: string;
+    hobbiesKnown?: string[];
+    hobbiesWantToLearn?: string[];
+  };
 }
 
 export default function MatchesList({
   currentUser,
-  onUserSelect,
 }: MatchesListProps) {
   const [matches, setMatches] = useState<SemanticMatch[]>([]);
   const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState<"score" | "name">("score");
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
-  const [semanticAnalysis, setSemanticAnalysis] = useState<any>(null);
+  const [semanticAnalysis, setSemanticAnalysis] = useState<{
+    totalHobbiesAnalyzed: number;
+    transferableMatchesFound: number;
+    usersWithTransferableSkills: number;
+  } | null>(null);
 
   // Fetch semantic search matches with caching
   const fetchMatches = useCallback(
@@ -80,11 +81,11 @@ export default function MatchesList({
   // Remove auto-fetch to prevent infinite loading
   // Users must manually click refresh to get matches
 
-  const handleUserSelect = (match: SemanticMatch) => {
-    if (onUserSelect) {
-      onUserSelect(match.user);
-    }
-  };
+  // const handleUserSelect = (match: SemanticMatch) => {
+  //   if (onUserSelect) {
+  //     onUserSelect(match.user);
+  //   }
+  // };
 
   // Convert semantic match to Profile format
   const convertMatchToProfile = (match: SemanticMatch): Profile => {
@@ -226,7 +227,7 @@ export default function MatchesList({
                   </div>
                   {match.explanation && (
                     <div className="text-purple-600 mt-1 italic">
-                      "{match.explanation}"
+                      &ldquo;{match.explanation}&rdquo;
                     </div>
                   )}
                 </div>

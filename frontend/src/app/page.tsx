@@ -1053,12 +1053,6 @@ export default function Home() {
               {console.log("🔍 Main Page: Current user data:", currentUser)}
               <MatchesList
                 currentUser={currentUser}
-                onUserSelect={(user) => {
-                  // Convert backend user to profile format and show in modal
-                  const profile = convertBackendUserToProfile(user);
-                  setSelectedProfile(profile);
-                  setIsModalOpen(true);
-                }}
               />
             </>
           )}

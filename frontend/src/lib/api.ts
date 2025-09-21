@@ -201,7 +201,17 @@ class ApiService {
   }
 
   // Get semantic search hobby matches
-  async getSemanticMatches(currentUser: any): Promise<SemanticMatchResponse> {
+  async getSemanticMatches(currentUser: {
+    id: string;
+    name: string;
+    image?: string;
+    location?: string;
+    bio?: string;
+    netID: string;
+    instagram?: string;
+    hobbiesKnown?: string[];
+    hobbiesWantToLearn?: string[];
+  }): Promise<SemanticMatchResponse> {
     console.log("🌐 API: getSemanticMatches - Starting request");
     console.log("📝 API: getSemanticMatches - Current user:", currentUser);
 
@@ -254,7 +264,7 @@ class ApiService {
       const data = await response.json();
       console.log("✅ API: getSemanticMatches - Success, data:", data);
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ API: getSemanticMatches - Error:", error);
       throw error;
     }
