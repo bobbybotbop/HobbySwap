@@ -1,6 +1,11 @@
 import { Request, Response } from "express";
 import { User, InteractedUser } from "../models/userModel";
 import bcrypt from "bcrypt";
+import dotenv from "dotenv";
+dotenv.config({ path: "./backend/.env" });
+import axios from "axios";
+
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 // GET all users EXCEPT for encrypted password
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
@@ -404,11 +409,22 @@ export const updateUserPersonalInformation = async (
     const { id } = req.params;
     const { personalInformation } = req.body;
 
+    // Use $set with dot notation to update specific fields without replacing the entire object
+    const updateFields: any = {};
+    Object.keys(personalInformation).forEach((key) => {
+      updateFields[`personalInformation.${key}`] = personalInformation[key];
+    });
+
     const updatedUser = await User.findByIdAndUpdate(
       id,
-      { personalInformation: personalInformation },
+      { $set: updateFields },
       { new: true }
     ).select("-personalInformation.encryptedPassword");
+
+    if (!updatedUser) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
 
     res.status(200).json("Successfully updated personal information");
   } catch (error: any) {
@@ -628,3 +644,596 @@ export const updateSwapRequestStatus = async (req: Request, res: Response): Prom
     res.status(500).json({ message: error.message });
   }
 };
+
+// ===== AI-POWERED HOBBY MATCHING =====
+
+interface HobbyMatch {
+  user: {
+    _id: string;
+    name: string;
+    personalInformation: {
+      name: string;
+      image?: string;
+      location?: string;
+      bio?: string;
+      netid: string;
+      instagram?: string;
+    };
+  };
+  transferableHobbies: string[];
+  explanation: string;
+  matchScore: number;
+}
+
+// Semantic hobby matching with category relationships
+export const getAIMatches = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    console.log("🧠 getAIMatches: Starting semantic hobby matching");
+    const { currentUser } = req.body;
+
+    if (!currentUser) {
+      res.status(400).json({ message: "Current user data is required" });
+      return;
+    }
+
+    console.log("📝 getAIMatches: Current user:", {
+      id: currentUser._id,
+      name: currentUser.personalInformation?.name,
+      hobbies: currentUser.hobbies?.length || 0,
+      hobbiesWantToLearn: currentUser.hobbiesWantToLearn?.length || 0,
+    });
+
+    // Get all other users
+    const allUsers = await User.find({ _id: { $ne: currentUser._id } }).select(
+      "-personalInformation.encryptedPassword"
+    );
+
+    console.log(`👥 getAIMatches: Found ${allUsers.length} other users`);
+
+    // Extract current user's hobbies
+    const currentUserHobbies = currentUser.hobbies || [];
+    const currentUserWantsToLearn = currentUser.hobbiesWantToLearn || [];
+
+    console.log("🎯 getAIMatches: Current user hobbies:", {
+      knows: currentUserHobbies,
+      wantsToLearn: currentUserWantsToLearn,
+    });
+
+    // Semantic hobby matching algorithm
+    const matches: HobbyMatch[] = [];
+
+    allUsers.forEach((user) => {
+      const userHobbies = user.hobbies || [];
+      const userWantsToLearn = user.hobbiesWantToLearn || [];
+
+      // Find semantic matches
+      const semanticMatches = findSemanticMatches(
+        currentUserHobbies,
+        currentUserWantsToLearn,
+        userHobbies,
+        userWantsToLearn
+      );
+
+      if (semanticMatches.score > 0) {
+        matches.push({
+          user: {
+            _id: (user._id as any)?.toString() || "",
+            name: user.personalInformation.name,
+            personalInformation: user.personalInformation,
+          },
+          transferableHobbies: semanticMatches.matchingHobbies,
+          explanation: semanticMatches.explanation,
+          matchScore: semanticMatches.score,
+        });
+      }
+    });
+
+    // Sort by match score (highest first)
+    matches.sort((a, b) => b.matchScore - a.matchScore);
+
+    console.log(`✅ getAIMatches: Found ${matches.length} semantic matches`);
+
+    res.status(200).json({
+      message: "Semantic hobby matches found successfully",
+      matches,
+      totalMatches: matches.length,
+      semanticAnalysis: {
+        totalHobbiesAnalyzed: [
+          ...currentUserHobbies,
+          ...currentUserWantsToLearn,
+        ].length,
+        transferableMatchesFound: matches.reduce(
+          (sum, match) => sum + match.transferableHobbies.length,
+          0
+        ),
+        usersWithTransferableSkills: matches.length,
+      },
+    });
+  } catch (error: any) {
+    console.error("❌ getAIMatches: Error occurred:", error);
+    res.status(500).json({
+      message: error.message,
+      details: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
+  }
+};
+
+// Helper function to generate match explanations
+function generateMatchExplanation(
+  directMatches: string[],
+  reverseMatches: string[],
+  similarMatches: string[]
+): string {
+  const explanations: string[] = [];
+
+  if (directMatches.length > 0) {
+    explanations.push(`Can teach you: ${directMatches.join(", ")}`);
+  }
+
+  if (reverseMatches.length > 0) {
+    explanations.push(`Wants to learn: ${reverseMatches.join(", ")}`);
+  }
+
+  if (similarMatches.length > 0) {
+    explanations.push(`Has similar hobbies: ${similarMatches.join(", ")}`);
+  }
+
+  return explanations.join(". ") + ".";
+}
+
+// Semantic hobby matching system
+interface SemanticMatch {
+  score: number;
+  matchingHobbies: string[];
+  explanation: string;
+}
+
+// Hobby categories and relationships
+const HOBBY_CATEGORIES = {
+  "Technology & Programming": {
+    keywords: [
+      "coding",
+      "programming",
+      "development",
+      "software",
+      "tech",
+      "computer",
+    ],
+    hobbies: [
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "Python",
+      "Java",
+      "C++",
+      "Web Development",
+      "App Development",
+      "Game Development",
+      "Data Science",
+      "Machine Learning",
+      "Cybersecurity",
+      "DevOps",
+      "UI/UX Design",
+      "Graphic Design",
+      "Digital Art",
+      "Video Editing",
+      "Photography",
+      "3D Modeling",
+      "Robotics",
+      "Electronics",
+      "Arduino",
+      "Raspberry Pi",
+    ],
+  },
+  "Arts & Crafts": {
+    keywords: ["art", "creative", "craft", "design", "visual", "aesthetic"],
+    hobbies: [
+      "Drawing",
+      "Painting",
+      "Sculpting",
+      "Pottery",
+      "Ceramics",
+      "Woodworking",
+      "Metalworking",
+      "Jewelry Making",
+      "Knitting",
+      "Crocheting",
+      "Sewing",
+      "Embroidery",
+      "Quilting",
+      "Origami",
+      "Paper Crafts",
+      "Calligraphy",
+      "Typography",
+      "Photography",
+      "Digital Art",
+      "Graphic Design",
+      "UI/UX Design",
+      "Video Editing",
+      "Music Production",
+      "Songwriting",
+      "Dancing",
+      "Acting",
+      "Theater",
+    ],
+  },
+  "Music & Performance": {
+    keywords: [
+      "music",
+      "sound",
+      "performance",
+      "entertainment",
+      "rhythm",
+      "melody",
+    ],
+    hobbies: [
+      "Guitar",
+      "Piano",
+      "Violin",
+      "Drums",
+      "Bass",
+      "Singing",
+      "Songwriting",
+      "Music Production",
+      "DJing",
+      "Dancing",
+      "Ballet",
+      "Hip Hop",
+      "Acting",
+      "Theater",
+      "Stand-up Comedy",
+      "Magic",
+      "Circus Arts",
+      "Public Speaking",
+      "Podcasting",
+      "Voice Acting",
+    ],
+  },
+  "Sports & Fitness": {
+    keywords: [
+      "sport",
+      "fitness",
+      "exercise",
+      "physical",
+      "athletic",
+      "movement",
+    ],
+    hobbies: [
+      "Running",
+      "Cycling",
+      "Swimming",
+      "Weightlifting",
+      "Yoga",
+      "Pilates",
+      "Martial Arts",
+      "Boxing",
+      "Rock Climbing",
+      "Hiking",
+      "Tennis",
+      "Basketball",
+      "Soccer",
+      "Volleyball",
+      "Golf",
+      "Skiing",
+      "Snowboarding",
+      "Surfing",
+      "Skateboarding",
+      "Dancing",
+      "Gymnastics",
+      "Parkour",
+      "Archery",
+      "Fencing",
+    ],
+  },
+  "Food & Cooking": {
+    keywords: ["food", "cooking", "culinary", "kitchen", "recipe", "baking"],
+    hobbies: [
+      "Cooking",
+      "Baking",
+      "Pastry Making",
+      "Bartending",
+      "Wine Tasting",
+      "Coffee Roasting",
+      "Fermentation",
+      "Gardening",
+      "Urban Farming",
+      "Food Photography",
+      "Food Blogging",
+      "Restaurant Reviewing",
+      "Food Styling",
+      "Cake Decorating",
+      "Chocolate Making",
+      "Cheese Making",
+      "Beer Brewing",
+      "Distilling",
+    ],
+  },
+  "Outdoor & Nature": {
+    keywords: [
+      "outdoor",
+      "nature",
+      "environment",
+      "wildlife",
+      "conservation",
+      "adventure",
+    ],
+    hobbies: [
+      "Hiking",
+      "Camping",
+      "Backpacking",
+      "Rock Climbing",
+      "Mountain Biking",
+      "Kayaking",
+      "Canoeing",
+      "Fishing",
+      "Hunting",
+      "Gardening",
+      "Urban Farming",
+      "Beekeeping",
+      "Bird Watching",
+      "Wildlife Photography",
+      "Astronomy",
+      "Geocaching",
+      "Survival Skills",
+      "Foraging",
+      "Mushroom Hunting",
+      "Conservation",
+      "Environmental Activism",
+    ],
+  },
+  "Language & Communication": {
+    keywords: [
+      "language",
+      "communication",
+      "writing",
+      "reading",
+      "speaking",
+      "linguistic",
+    ],
+    hobbies: [
+      "Language Learning",
+      "Writing",
+      "Poetry",
+      "Blogging",
+      "Journalism",
+      "Public Speaking",
+      "Debate",
+      "Translation",
+      "Interpretation",
+      "Podcasting",
+      "Voice Acting",
+      "Storytelling",
+      "Stand-up Comedy",
+      "Teaching",
+      "Tutoring",
+      "Mentoring",
+      "Book Club",
+      "Reading",
+      "Book Reviewing",
+    ],
+  },
+  "Science & Learning": {
+    keywords: [
+      "science",
+      "learning",
+      "education",
+      "research",
+      "experiment",
+      "discovery",
+    ],
+    hobbies: [
+      "Astronomy",
+      "Physics",
+      "Chemistry",
+      "Biology",
+      "Mathematics",
+      "Statistics",
+      "Data Science",
+      "Machine Learning",
+      "Robotics",
+      "Electronics",
+      "Arduino",
+      "Raspberry Pi",
+      "3D Printing",
+      "Microscopy",
+      "Geology",
+      "Paleontology",
+      "Archaeology",
+      "History",
+      "Research",
+      "Experimentation",
+      "Documentation",
+      "Teaching",
+      "Tutoring",
+    ],
+  },
+  "Games & Strategy": {
+    keywords: [
+      "game",
+      "strategy",
+      "puzzle",
+      "logic",
+      "competition",
+      "challenge",
+    ],
+    hobbies: [
+      "Chess",
+      "Go",
+      "Poker",
+      "Bridge",
+      "Board Games",
+      "Tabletop RPGs",
+      "Video Games",
+      "Game Development",
+      "Puzzle Solving",
+      "Escape Rooms",
+      "Crossword Puzzles",
+      "Sudoku",
+      "Magic Tricks",
+      "Card Tricks",
+      "Strategy Games",
+      "War Games",
+      "Role-playing Games",
+      "Game Design",
+      "Game Testing",
+    ],
+  },
+};
+
+function findSemanticMatches(
+  currentUserHobbies: string[],
+  currentUserWantsToLearn: string[],
+  userHobbies: string[],
+  userWantsToLearn: string[]
+): SemanticMatch {
+  let score = 0;
+  const matchingHobbies: string[] = [];
+  const explanations: string[] = [];
+
+  // Direct matches (highest priority)
+  const directMatches = userHobbies.filter((hobby) =>
+    currentUserWantsToLearn.includes(hobby)
+  );
+  if (directMatches.length > 0) {
+    score += directMatches.length * 5;
+    matchingHobbies.push(...directMatches);
+    explanations.push(`Can teach you: ${directMatches.join(", ")}`);
+  }
+
+  // Reverse matches (high priority)
+  const reverseMatches = userWantsToLearn.filter((hobby) =>
+    currentUserHobbies.includes(hobby)
+  );
+  if (reverseMatches.length > 0) {
+    score += reverseMatches.length * 4;
+    matchingHobbies.push(...reverseMatches);
+    explanations.push(`Wants to learn: ${reverseMatches.join(", ")}`);
+  }
+
+  // Semantic matches (medium priority)
+  const semanticMatches = findCategoryMatches(
+    currentUserHobbies,
+    currentUserWantsToLearn,
+    userHobbies,
+    userWantsToLearn
+  );
+  if (semanticMatches.length > 0) {
+    score += semanticMatches.length * 3;
+    matchingHobbies.push(...semanticMatches.map((match) => match.hobby));
+    explanations.push(
+      `Related skills: ${semanticMatches
+        .map((match) => `${match.hobby} (${match.category})`)
+        .join(", ")}`
+    );
+  }
+
+  // Keyword matches (lower priority)
+  const keywordMatches = findKeywordMatches(
+    currentUserHobbies,
+    currentUserWantsToLearn,
+    userHobbies,
+    userWantsToLearn
+  );
+  if (keywordMatches.length > 0) {
+    score += keywordMatches.length * 2;
+    matchingHobbies.push(...keywordMatches.map((match) => match.hobby));
+    explanations.push(
+      `Similar interests: ${keywordMatches
+        .map((match) => `${match.hobby} (${match.keyword})`)
+        .join(", ")}`
+    );
+  }
+
+  // Remove duplicates
+  const uniqueMatchingHobbies = [...new Set(matchingHobbies)];
+
+  return {
+    score,
+    matchingHobbies: uniqueMatchingHobbies,
+    explanation: explanations.join(". ") + ".",
+  };
+}
+
+function findCategoryMatches(
+  currentUserHobbies: string[],
+  currentUserWantsToLearn: string[],
+  userHobbies: string[],
+  userWantsToLearn: string[]
+): Array<{ hobby: string; category: string }> {
+  const matches: Array<{ hobby: string; category: string }> = [];
+
+  // Check each category
+  Object.entries(HOBBY_CATEGORIES).forEach(([categoryName, category]) => {
+    const currentUserInCategory = [
+      ...currentUserHobbies,
+      ...currentUserWantsToLearn,
+    ].some((hobby) =>
+      category.hobbies.some(
+        (catHobby) =>
+          hobby.toLowerCase().includes(catHobby.toLowerCase()) ||
+          catHobby.toLowerCase().includes(hobby.toLowerCase())
+      )
+    );
+
+    if (currentUserInCategory) {
+      // Find user hobbies in the same category
+      userHobbies.forEach((hobby) => {
+        const hobbyInCategory = category.hobbies.some(
+          (catHobby) =>
+            hobby.toLowerCase().includes(catHobby.toLowerCase()) ||
+            catHobby.toLowerCase().includes(hobby.toLowerCase())
+        );
+
+        if (
+          hobbyInCategory &&
+          !matches.some((match) => match.hobby === hobby)
+        ) {
+          matches.push({ hobby, category: categoryName });
+        }
+      });
+    }
+  });
+
+  return matches;
+}
+
+function findKeywordMatches(
+  currentUserHobbies: string[],
+  currentUserWantsToLearn: string[],
+  userHobbies: string[],
+  userWantsToLearn: string[]
+): Array<{ hobby: string; keyword: string }> {
+  const matches: Array<{ hobby: string; keyword: string }> = [];
+
+  // Get all keywords from current user's hobbies
+  const currentUserKeywords = new Set<string>();
+  [...currentUserHobbies, ...currentUserWantsToLearn].forEach((hobby) => {
+    Object.values(HOBBY_CATEGORIES).forEach((category) => {
+      category.keywords.forEach((keyword) => {
+        if (hobby.toLowerCase().includes(keyword.toLowerCase())) {
+          currentUserKeywords.add(keyword);
+        }
+      });
+    });
+  });
+
+  // Find user hobbies that match these keywords
+  userHobbies.forEach((hobby) => {
+    Object.values(HOBBY_CATEGORIES).forEach((category) => {
+      category.keywords.forEach((keyword) => {
+        if (
+          currentUserKeywords.has(keyword) &&
+          hobby.toLowerCase().includes(keyword.toLowerCase()) &&
+          !matches.some((match) => match.hobby === hobby)
+        ) {
+          matches.push({ hobby, keyword });
+        }
+      });
+    });
+  });
+
+  return matches;
+}

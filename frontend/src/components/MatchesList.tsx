@@ -1,293 +1,279 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { apiService, Match } from "@/lib/api";
+import { useState, useEffect, useCallback } from "react";
+import { apiService, SemanticMatch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Loader2, Users, Star, ArrowRight, RefreshCw } from "lucide-react";
+import { Loader2, Users, RefreshCw, SortAsc, Star } from "lucide-react";
+import ProfileCard from "@/components/ProfileCard";
 import { Profile } from "@/types/profile";
 
 interface MatchesListProps {
-  userId: string;
-  profiles?: Profile[];
-  onUserSelect?: (user: Profile) => void;
+  currentUser: any;
+  onUserSelect?: (user: {
+    _id: string;
+    name: string;
+    personalInformation: {
+      name: string;
+      image?: string;
+      location?: string;
+      bio?: string;
+      netid: string;
+      instagram?: string;
+    };
+  }) => void;
 }
 
-export default function MatchesList({ userId, profiles, onUserSelect }: MatchesListProps) {
-  console.log("🔍 MatchesList received userId:", userId, "type:", typeof userId);
-  
-  const [matches, setMatches] = useState<Match[]>([]);
+export default function MatchesList({
+  currentUser,
+  onUserSelect,
+}: MatchesListProps) {
+  const [matches, setMatches] = useState<SemanticMatch[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchHobby, setSearchHobby] = useState("");
-  const [searchResults, setSearchResults] = useState<Match[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"all" | "search">("all");
+  const [sortBy, setSortBy] = useState<"score" | "name">("score");
+  const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const [semanticAnalysis, setSemanticAnalysis] = useState<any>(null);
 
-  // Convert profiles to matches format
-  const convertProfilesToMatches = (profiles: Profile[]): Match[] => {
-    return profiles.map(profile => ({
-      user: {
-        _id: profile.id,
-        personalInformation: {
-          name: profile.name,
-          location: profile.location,
-          image: profile.image,
-          bio: profile.bio,
-          instagram: profile.instagram,
-          email: profile.email
-        },
-        hobbies: profile.hobbiesKnown,
-        hobbiesWantToLearn: profile.hobbiesWantToLearn
-      },
-      score: Math.floor(Math.random() * 50) + 50, // Random score between 50-100
-      theyKnowYouWant: profile.hobbiesWantToLearn.slice(0, 2), // First 2 hobbies they want to learn
-      theyWantYouKnow: profile.hobbiesKnown.slice(0, 2) // First 2 hobbies they know
-    }));
-  };
-
-  // Fetch all matches
-  const fetchMatches = async (retryCount = 0) => {
-    console.log("🔍 MatchesList fetchMatches called with userId:", userId);
-    if (!userId) {
-      console.log("🔍 No userId provided, skipping fetch");
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      if (profiles && profiles.length > 0) {
-        console.log("🔍 Using static profiles for matches");
-        const matches = convertProfilesToMatches(profiles);
-        setMatches(matches);
-      } else {
-        console.log("🔍 No profiles provided, using empty matches");
-        setMatches([]);
+  // Fetch semantic search matches with caching
+  const fetchMatches = useCallback(
+    async (forceRefresh = false) => {
+      if (!currentUser || !currentUser.id) {
+        console.log("🔍 MatchesList: No currentUser provided, skipping fetch");
+        return;
       }
-    } catch (error) {
-      console.error("🔍 Error processing matches:", error);
-      setMatches([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // Search for specific hobby teachers
-  const searchHobbyTeachers = async () => {
-    if (!userId || !searchHobby.trim()) return;
-    
-    setSearchLoading(true);
-    try {
-      const response = await apiService.searchHobbyTeachers(userId, searchHobby);
-      setSearchResults(response.matches);
-      setActiveTab("search");
-    } catch (error) {
-      console.error("Error searching hobby teachers:", error);
-    } finally {
-      setSearchLoading(false);
-    }
-  };
+      // Check if we have cached matches and they're not too old (5 minutes)
+      const cacheValid =
+        lastFetched &&
+        Date.now() - lastFetched.getTime() < 5 * 60 * 1000 &&
+        matches.length > 0;
 
-  useEffect(() => {
-    console.log("🔍 MatchesList useEffect triggered, userId:", userId, "profiles:", profiles?.length);
-    if (userId) {
-      fetchMatches();
-    }
-  }, [userId, profiles]);
+      if (!forceRefresh && cacheValid) {
+        console.log("🔍 MatchesList: Using cached matches");
+        return;
+      }
 
-  const handleUserSelect = (match: Match) => {
+      console.log(
+        "🔍 MatchesList: Fetching semantic matches for user:",
+        currentUser.id
+      );
+      setLoading(true);
+
+      try {
+        const response = await apiService.getSemanticMatches(currentUser);
+        console.log("🔍 MatchesList: Semantic matches response:", response);
+
+        setMatches(response.matches);
+        setSemanticAnalysis(response.semanticAnalysis);
+        setLastFetched(new Date());
+      } catch (error) {
+        console.error(
+          "❌ MatchesList: Error fetching semantic matches:",
+          error
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [currentUser, matches.length, lastFetched]
+  );
+
+  // Remove auto-fetch to prevent infinite loading
+  // Users must manually click refresh to get matches
+
+  const handleUserSelect = (match: SemanticMatch) => {
     if (onUserSelect) {
       onUserSelect(match.user);
     }
   };
 
-  const renderMatchCard = (match: Match, index: number) => (
-    <div
-      key={`${match.user._id}-${index}`}
-      className="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
-      onClick={() => handleUserSelect(match)}
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-            {match.user.personalInformation.name.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-900">
-              {match.user.personalInformation.name}
-            </h3>
-            <p className="text-sm text-gray-500">
-              {match.user.personalInformation.location || "Location not specified"}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-1 text-yellow-500">
-          <Star className="w-4 h-4 fill-current" />
-          <span className="font-semibold">{match.score}</span>
-        </div>
-      </div>
+  // Convert semantic match to Profile format
+  const convertMatchToProfile = (match: SemanticMatch): Profile => {
+    return {
+      id: match.user._id,
+      name: match.user.personalInformation.name,
+      location: match.user.personalInformation.location || "Not specified",
+      image:
+        match.user.personalInformation.image ||
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
+      hobbiesKnown: match.transferableHobbies,
+      hobbiesWantToLearn: [], // Semantic matches focus on what they can teach you
+      netID: match.user.personalInformation.netid,
+      bio:
+        match.user.personalInformation.bio ||
+        `Hi! I'm ${match.user.personalInformation.name} and I can help you learn new skills!`,
+      instagram: match.user.personalInformation.instagram || "",
+      email: `${match.user.personalInformation.netid}@example.com`,
+    };
+  };
 
-      <div className="space-y-3">
-        {match.theyKnowYouWant.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-green-700 mb-2">
-              🎯 They can teach you:
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {match.theyKnowYouWant.map((hobby, idx) => (
-                <span
-                  key={idx}
-                  className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full"
-                >
-                  {hobby}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+  // Sort matches based on current sort option
+  const sortedMatches = [...matches].sort((a, b) => {
+    if (sortBy === "score") {
+      return b.matchScore - a.matchScore; // Highest score first
+    } else {
+      return a.user.personalInformation.name.localeCompare(
+        b.user.personalInformation.name
+      );
+    }
+  });
 
-        {match.theyWantYouKnow.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-blue-700 mb-2">
-              🎓 You can teach them:
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {match.theyWantYouKnow.map((hobby, idx) => (
-                <span
-                  key={idx}
-                  className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                >
-                  {hobby}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-4 pt-4 border-t border-gray-100">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full group"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleUserSelect(match);
-          }}
-        >
-          View Profile
-          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-        </Button>
-      </div>
-    </div>
-  );
+  const handleRefresh = () => {
+    fetchMatches(true);
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-            <Users className="w-6 h-6 mr-2" />
-            Hobby Matches
+          <h2 className="text-2xl font-bold text-gray-900">
+            Semantic Search Matches
           </h2>
           <p className="text-gray-600 mt-1">
-            Find people who can teach you new skills and learn from you
+            Click refresh to find skill-based matches using semantic search
           </p>
+          {matches.length > 0 && (
+            <p className="text-sm text-gray-500 mt-1">
+              {matches.length} {matches.length === 1 ? "match" : "matches"}{" "}
+              found
+            </p>
+          )}
+          {lastFetched && (
+            <p className="text-xs text-gray-400 mt-1">
+              Last updated: {lastFetched.toLocaleTimeString()}
+            </p>
+          )}
         </div>
-        <Button
-          variant="outline"
-          onClick={fetchMatches}
-          disabled={loading}
-          className="flex items-center"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-      </div>
-
-      {/* Search Section */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-3">Search for specific hobby teachers</h3>
-        <div className="flex space-x-2">
-          <Input
-            placeholder="Enter a hobby (e.g., guitar, cooking, photography)"
-            value={searchHobby}
-            onChange={(e) => setSearchHobby(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && searchHobbyTeachers()}
-            className="flex-1"
-          />
+        <div className="flex items-center space-x-2">
           <Button
-            onClick={searchHobbyTeachers}
-            disabled={searchLoading || !searchHobby.trim()}
+            variant="outline"
+            size="sm"
+            onClick={() => setSortBy(sortBy === "score" ? "name" : "score")}
             className="flex items-center"
           >
-            {searchLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Search className="w-4 h-4" />
-            )}
+            <SortAsc className="w-4 h-4 mr-2" />
+            Sort by {sortBy === "score" ? "Name" : "Score"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={loading || !currentUser}
+            className="flex items-center"
+          >
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
+            {loading ? "Searching..." : "Refresh"}
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-        <button
-          onClick={() => setActiveTab("all")}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "all"
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
-        >
-          All Matches ({matches.length})
-        </button>
-        <button
-          onClick={() => setActiveTab("search")}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "search"
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
-        >
-          Search Results ({searchResults.length})
-        </button>
-      </div>
+      {/* Semantic Analysis Info */}
+      {semanticAnalysis && (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="flex items-center mb-2">
+            <h3 className="font-medium text-purple-900">Semantic Analysis</h3>
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <span className="text-purple-700 font-medium">
+                {semanticAnalysis.totalHobbiesAnalyzed}
+              </span>
+              <span className="text-purple-600 ml-1">hobbies analyzed</span>
+            </div>
+            <div>
+              <span className="text-purple-700 font-medium">
+                {semanticAnalysis.transferableMatchesFound}
+              </span>
+              <span className="text-purple-600 ml-1">transferable skills</span>
+            </div>
+            <div>
+              <span className="text-purple-700 font-medium">
+                {semanticAnalysis.usersWithTransferableSkills}
+              </span>
+              <span className="text-purple-600 ml-1">potential mentors</span>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-          <span className="ml-2 text-gray-600">Finding your matches...</span>
+          <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+          <span className="ml-2 text-gray-600">
+            Finding semantic matches...
+          </span>
         </div>
-      ) : activeTab === "all" ? (
-        matches.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {matches.map((match, index) => renderMatchCard(match, index))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No matches found</h3>
-            <p className="text-gray-600">
-              Try updating your hobbies or check back later for new users.
-            </p>
-          </div>
-        )
+      ) : matches.length > 0 ? (
+        <div className="grid grid-cols-3 gap-6">
+          {sortedMatches.map((match, index) => {
+            const profile = convertMatchToProfile(match);
+            return (
+              <div key={`${match.user._id}-${index}`} className="relative">
+                <ProfileCard profile={profile} />
+                {/* Match Score Badge */}
+                <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full flex items-center">
+                  <Star className="w-3 h-3 mr-1" />
+                  {match.matchScore}
+                </div>
+                {/* Transferable Skills Info */}
+                <div className="mt-2 p-2 bg-purple-50 rounded text-xs">
+                  <div className="font-medium text-purple-900 mb-1">
+                    Transferable Skills:
+                  </div>
+                  <div className="text-purple-700">
+                    {match.transferableHobbies.join(", ")}
+                  </div>
+                  {match.explanation && (
+                    <div className="text-purple-600 mt-1 italic">
+                      "{match.explanation}"
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
-        searchResults.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {searchResults.map((match, index) => renderMatchCard(match, index))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No teachers found</h3>
-            <p className="text-gray-600">
-              No one can teach &quot;{searchHobby}&quot; yet. Try a different hobby or check back later.
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {matches.length === 0 && !loading
+              ? "Click Refresh to Find Semantic Matches"
+              : "No semantic matches found"}
+          </h3>
+          <p className="text-gray-600">
+            {matches.length === 0 && !loading
+              ? "Click the Refresh button above to find skill-based matches using semantic search."
+              : "No users found with matching skills for your hobbies. Try updating your hobbies or check back later for new users."}
+          </p>
+          {matches.length === 0 && !loading && (
+            <div className="mt-6">
+              <Button
+                onClick={handleRefresh}
+                disabled={!currentUser}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2"
+              >
+                Find Hobby Matches
+              </Button>
+            </div>
+          )}
+
+          <div className="mt-4 text-sm text-gray-500">
+            <p>Debug info:</p>
+            <p>• Current user: {currentUser?.name || "None"}</p>
+            <p>• User ID: {currentUser?.id || "None"}</p>
+            <p>• Hobbies known: {currentUser?.hobbiesKnown?.length || 0}</p>
+            <p>
+              • Hobbies want to learn:{" "}
+              {currentUser?.hobbiesWantToLearn?.length || 0}
+            </p>
+            <p>• Loading: {loading ? "Yes" : "No"}</p>
+            <p>
+              • Last fetched:{" "}
+              {lastFetched ? lastFetched.toLocaleTimeString() : "Never"}
             </p>
           </div>
-        )
+        </div>
       )}
     </div>
   );

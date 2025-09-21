@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { User } from "../models/userModel";
-import { matchUsers, searchUsers, normalizeHobbies } from "../algorithms";
 
 // GET matches for a specific user
 export const getUserMatches = async (
@@ -42,37 +41,24 @@ export const getUserMatches = async (
     console.log("🔍 Finding matches for user:", currentUser.personalInformation.name);
     console.log("👥 Searching among", allUsersForMatching.length, "other users");
 
-    // Get matches using the algorithm
-    try {
-      const matches = await matchUsers(currentUserForMatching, allUsersForMatching);
-      console.log(`✅ Found ${matches.length} matches`);
+    // Simple fallback matching since algorithms.ts was removed
+    const fallbackMatches = allUsersForMatching.map((user, index) => ({
+      user: {
+        _id: user._id,
+        personalInformation: user.personalInformation,
+        hobbies: user.hobbiesKnow.map((h: any) => h.name),
+        hobbiesWantToLearn: user.hobbiesWant.map((h: any) => h.name),
+      },
+      score: 0.5 + (index * 0.1), // Simple scoring
+      theyKnowYouWant: user.hobbiesKnow.map((h: any) => h.name).slice(0, 2),
+      theyWantYouKnow: user.hobbiesWant.map((h: any) => h.name).slice(0, 2),
+    }));
 
-      res.status(200).json({
-        message: "Matches found successfully",
-        matches: matches,
-        totalMatches: matches.length,
-      });
-    } catch (algoError: any) {
-      console.error("❌ Algorithm error:", algoError);
-      // Fallback: return all users as potential matches
-      const fallbackMatches = allUsersForMatching.map((user, index) => ({
-        user: {
-          _id: user._id,
-          personalInformation: user.personalInformation,
-          hobbies: user.hobbiesKnow.map((h: any) => h.name),
-          hobbiesWantToLearn: user.hobbiesWant.map((h: any) => h.name),
-        },
-        score: 0.5 + (index * 0.1), // Simple scoring
-        theyKnowYouWant: user.hobbiesKnow.map((h: any) => h.name).slice(0, 2),
-        theyWantYouKnow: user.hobbiesWant.map((h: any) => h.name).slice(0, 2),
-      }));
-
-      res.status(200).json({
-        message: "Matches found successfully (fallback mode)",
-        matches: fallbackMatches,
-        totalMatches: fallbackMatches.length,
-      });
-    }
+    res.status(200).json({
+      message: "Matches found successfully (fallback mode)",
+      matches: fallbackMatches,
+      totalMatches: fallbackMatches.length,
+    });
   } catch (error: any) {
     console.error("❌ Error finding matches:", error);
     res.status(500).json({ message: error.message });
@@ -126,16 +112,24 @@ export const searchHobbyTeachers = async (
 
     console.log(`🔍 Searching for teachers of "${hobby}" for user:`, currentUser.personalInformation.name);
 
-    // Search for users who can teach this hobby
-    await searchUsers(currentUserForMatching, allUsersForMatching, hobby as string);
-
-    // Also get the filtered matches for the response
-    const allMatches = await matchUsers(currentUserForMatching, allUsersForMatching);
-    const hobbyMatches = allMatches.filter(match =>
-      match.theyKnowYouWant.some(h => 
-        h.toLowerCase().includes((hobby as string).toLowerCase())
+    // Simple hobby filtering since algorithms.ts was removed
+    const hobbyMatches = allUsersForMatching
+      .filter(user => 
+        user.hobbiesKnow.some(h => 
+          h.name.toLowerCase().includes((hobby as string).toLowerCase())
+        )
       )
-    );
+      .map((user, index) => ({
+        user: {
+          _id: user._id,
+          personalInformation: user.personalInformation,
+          hobbies: user.hobbiesKnow.map((h: any) => h.name),
+          hobbiesWantToLearn: user.hobbiesWant.map((h: any) => h.name),
+        },
+        score: 0.5 + (index * 0.1),
+        theyKnowYouWant: user.hobbiesKnow.map((h: any) => h.name).slice(0, 2),
+        theyWantYouKnow: user.hobbiesWant.map((h: any) => h.name).slice(0, 2),
+      }));
 
     res.status(200).json({
       message: `Found ${hobbyMatches.length} users who can teach "${hobby}"`,
@@ -166,8 +160,10 @@ export const normalizeUserHobbies = async (
 
     console.log("🤖 Normalizing hobbies with AI:", hobbies);
 
-    // Use the AI normalization function
-    const normalizedHobbies = await normalizeHobbies(hobbies);
+    // Simple normalization since algorithms.ts was removed
+    const normalizedHobbies = hobbies.map((hobby: string) => 
+      hobby.trim().toLowerCase().replace(/\s+/g, ' ')
+    );
 
     console.log("✅ Hobbies normalized successfully");
 

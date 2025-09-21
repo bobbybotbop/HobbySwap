@@ -28,7 +28,13 @@ import {
   Search,
   Users,
 } from "lucide-react";
-import { SmileSquare, Star, CogFour, Send, Inbox } from "@mynaui/icons-react";
+import {
+  Search as SearchIcon,
+  Star,
+  CogFour,
+  Send,
+  Inbox,
+} from "@mynaui/icons-react";
 import ProfileCard from "@/components/ProfileCard";
 import MatchesList from "@/components/MatchesList";
 import ProfileModal from "@/components/ProfileModal";
@@ -179,10 +185,11 @@ const generateProfiles = async () => {
   return validProfiles;
 };
 
+// This will be handled by the generateProfiles function
 
 export default function Home() {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState("For You");
+  const [activeTab, setActiveTab] = useState("Search");
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const [age, setAge] = useState("");
@@ -237,6 +244,8 @@ export default function Home() {
     "checking" | "online" | "offline" | "loading" | null
   >("loading");
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  // Algorithms status state removed
+  // Algorithms details state removed
   const [isImportingUsers, setIsImportingUsers] = useState(false);
   const [importStatus, setImportStatus] = useState<string>("");
   const [backendProfiles, setBackendProfiles] = useState<Profile[]>([]);
@@ -260,8 +269,8 @@ export default function Home() {
       try {
         console.log("🔍 Generating static users...");
         
-        // Generate random users
-        const staticUsers = generateRandomUsers(20);
+        // Generate random users with proper Profile structure
+        const staticUsers = await generateProfiles();
         console.log("📊 Generated static users:", staticUsers);
         
         setBackendProfiles(staticUsers);
@@ -285,10 +294,15 @@ export default function Home() {
     const storedUser = localStorage.getItem("user");
     const storedNetid = localStorage.getItem("netid");
 
+    console.log("🔍 Main Page: Checking localStorage for user data");
+    console.log("🔍 Main Page: storedUser:", storedUser);
+    console.log("🔍 Main Page: storedNetid:", storedNetid);
+
     if (storedUser && storedNetid) {
       try {
         const userProfile = JSON.parse(storedUser);
-        console.log("🔄 Loading stored user data:", userProfile);
+        console.log("🔄 Main Page: Loading stored user data:", userProfile);
+        console.log("🔄 Main Page: User ID:", userProfile.id);
         replaceCurrentUser(userProfile);
 
         // Check for tab parameter in URL
@@ -296,18 +310,33 @@ export default function Home() {
         if (tabParam) {
           setActiveTab(tabParam);
         } else {
-          setActiveTab("For You");
+          setActiveTab("Search");
         }
       } catch (error) {
-        console.error("❌ Error parsing stored user data:", error);
+        console.error("❌ Main Page: Error parsing stored user data:", error);
       }
+    } else {
+      console.log(
+        "⚠️ Main Page: No stored user data found, using default user"
+      );
     }
   }, [replaceCurrentUser, searchParams]);
 
   // Function to convert backend user to Profile format
-  const convertBackendUserToProfile = (user: { _id: string; personalInformation: { name: string; netid?: string; location?: string; image?: string; bio?: string; instagram?: string; email?: string }; hobbies?: string[]; hobbiesWantToLearn?: string[] }): Profile => {
+  const convertBackendUserToProfile = (user: {
+    _id: string;
+    personalInformation: {
+      name: string;
+      location?: string;
+      image?: string;
+      netid: string;
+      instagram?: string;
+    };
+    hobbies?: string[];
+    hobbiesWantToLearn?: string[];
+  }): Profile => {
     return {
-      id: user._id, // Use the actual MongoDB _id for unique identification
+      id: user._id, // Use MongoDB _id
       name: user.personalInformation.name,
       location: user.personalInformation.location || "Not specified",
       image:
@@ -327,7 +356,7 @@ export default function Home() {
     const user = backendProfiles.find((profile) => profile.netID === netid);
     if (user) {
       replaceCurrentUser(user);
-      setActiveTab("For You");
+      setActiveTab("Search");
     }
   };
 
@@ -441,9 +470,32 @@ export default function Home() {
     setSaveMessage("");
 
     try {
-      // Simulate successful save without backend calls
-      console.log("✅ Profile save simulated successfully");
-      
+      // Get user ID by netID from backend
+      const backendUser = await apiService.getUserByNetId(currentUser.netID);
+      const userId = backendUser._id;
+
+      // Update personal information
+      await apiService.updatePersonalInformation(userId, {
+        personalInformation: {
+          name: currentUser.name,
+          netid: currentUser.netID,
+          location: currentUser.location,
+          instagram: currentUser.instagram,
+          bio: currentUser.bio,
+          image: currentUser.image,
+        },
+      });
+
+      // Update hobbies
+      await apiService.updateHobbies(userId, {
+        hobbies: currentUser.hobbiesKnown,
+      });
+
+      // Update hobbies want to learn
+      await apiService.updateHobbiesWantToLearn(userId, {
+        hobbiesWantToLearn: currentUser.hobbiesWantToLearn,
+      });
+
       // Update localStorage with current user data
       localStorage.setItem("user", JSON.stringify(currentUser));
       
@@ -491,6 +543,85 @@ export default function Home() {
     }
   };
 
+  // Algorithms health check function removed
+
+  const fetchUsersFromBackend = async () => {
+    try {
+      console.log("🔍 Fetching users from backend...");
+      const response = await fetch("http://localhost:6767/api/users");
+
+      if (response.ok) {
+        const backendUsers = await response.json();
+        console.log("📊 Raw backend users data:", backendUsers);
+
+        // Convert backend users to Profile format
+        const convertedProfiles: Profile[] = backendUsers.map(
+          (
+            user: {
+              _id: string;
+              personalInformation: {
+                name: string;
+                location?: string;
+                image?: string;
+                netid: string;
+                instagram?: string;
+              };
+              hobbies?: string[];
+              hobbiesWantToLearn?: string[];
+            },
+            index: number
+          ) => {
+            console.log(`🔄 Converting user ${index + 1}:`);
+            console.log(`   📝 Name: ${user.personalInformation.name}`);
+            console.log(`   🆔 NetID: ${user.personalInformation.netid}`);
+            console.log(`   🆔 MongoDB ID: ${user._id}`);
+            console.log(
+              `   🖼️ Original Image: ${
+                user.personalInformation.image || "NO IMAGE"
+              }`
+            );
+            console.log(
+              `   📍 Location: ${
+                user.personalInformation.location || "NO LOCATION"
+              }`
+            );
+
+            const profile = {
+              id: user._id,
+              name: user.personalInformation.name,
+              location: user.personalInformation.location || "Not specified",
+              image:
+                user.personalInformation.image ||
+                "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
+              hobbiesKnown: user.hobbies || [],
+              hobbiesWantToLearn: user.hobbiesWantToLearn || [],
+              netID: user.personalInformation.netid,
+              bio: `Hi! I'm ${user.personalInformation.name} and I love sharing hobbies!`,
+              instagram: user.personalInformation.instagram || "",
+              email: `${user.personalInformation.netid}@example.com`,
+            };
+
+            console.log(`   🖼️ Final Image: ${profile.image}`);
+            return profile;
+          }
+        );
+
+        console.log("✅ Converted profiles:", convertedProfiles);
+        setBackendProfiles(convertedProfiles);
+        return convertedProfiles;
+      } else {
+        console.error(
+          "❌ Failed to fetch users from backend:",
+          response.status,
+          response.statusText
+        );
+        return [];
+      }
+    } catch (error) {
+      console.error("❌ Error fetching users from backend:", error);
+      return [];
+    }
+  };
 
   // Test users data that matches the user model structure
   const testUsers = [
@@ -711,8 +842,8 @@ export default function Home() {
           <ul className="space-y-2">
             {[
               {
-                name: "For You",
-                icon: <SmileSquare className="w-5 h-5" />,
+                name: "Search",
+                icon: <SearchIcon className="w-5 h-5" />,
               },
               { name: "Matches", icon: <Users className="w-5 h-5" /> },
               { name: "Sent", icon: <Send className="w-5 h-5" /> },
@@ -888,17 +1019,7 @@ export default function Home() {
               : "pt-2"
           }`}
         >
-          {activeTab === "For You" && (
-            <div>
-              {isLoadingUsers ? (
-                <div className="flex flex-col items-center justify-center h-64">
-                  <Loader2 className="w-8 h-8 animate-spin text-red-500 mb-4" />
-                  <p className="text-gray-600 mb-2">
-                    {useBackendData ? "Loading users from backend..." : "Generating random users..."}
-                  </p>
-                  <p className="text-sm text-gray-500">This may take a few moments</p>
-                </div>
-              ) : (
+          {activeTab === "Search" && (
             <div className="grid grid-cols-3 gap-6">
                   {(() => {
                     const profilesToShow = useBackendData ? backendProfiles : profiles;
@@ -921,30 +1042,25 @@ export default function Home() {
                     );
                   })()}
                 </div>
-              )}
-            </div>
           )}
 
-          {activeTab === "Matches" && userLoaded && (
+          {activeTab === "Matches" && (
             <>
-              {console.log("🔍 Rendering MatchesList with currentUser.id:", currentUser.id, "type:", typeof currentUser.id)}
+              {console.log(
+                "🔍 Main Page: Rendering MatchesList with userId:",
+                currentUser.id
+              )}
+              {console.log("🔍 Main Page: Current user data:", currentUser)}
               <MatchesList
-                userId={currentUser.id.toString()}
-                profiles={backendProfiles}
+                currentUser={currentUser}
                 onUserSelect={(user) => {
-                  // User is already a Profile object, use it directly
-                  setSelectedProfile(user);
+                  // Convert backend user to profile format and show in modal
+                  const profile = convertBackendUserToProfile(user);
+                  setSelectedProfile(profile);
                   setIsModalOpen(true);
                 }}
               />
             </>
-          )}
-          
-          {activeTab === "Matches" && !userLoaded && (
-            <div className="flex flex-col items-center justify-center h-64">
-              <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-              <p className="text-gray-600">Loading user data...</p>
-            </div>
           )}
 
           {activeTab === "Favorites" && (
@@ -958,7 +1074,7 @@ export default function Home() {
                   Start adding profiles to your favorites to see them here
                 </p>
                 <Button
-                  onClick={() => setActiveTab("For You")}
+                  onClick={() => setActiveTab("Search")}
                   className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
                 >
                   Browse Profiles
@@ -967,19 +1083,12 @@ export default function Home() {
             </div>
           )}
 
-          {activeTab === "Sent" && userLoaded && (
+          {activeTab === "Sent" && (
             <SentRequests userId={currentUser.id.toString()} />
           )}
 
-          {activeTab === "Received" && userLoaded && (
+          {activeTab === "Received" && (
             <ReceivedRequests userId={currentUser.id.toString()} />
-          )}
-          
-          {(activeTab === "Sent" || activeTab === "Received") && !userLoaded && (
-            <div className="flex flex-col items-center justify-center h-64">
-              <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-              <p className="text-gray-600">Loading user data...</p>
-            </div>
           )}
 
           {activeTab === "Settings" && (
@@ -1059,6 +1168,8 @@ export default function Home() {
                   </div>
                 </div>
 
+                {/* Algorithms Health Check removed */}
+
                 {/* Test Data Import Section */}
                 <div className="bg-gray-50 rounded-lg p-6">
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -1114,7 +1225,9 @@ export default function Home() {
                         • Test users will be created with NetIDs: marcus01,
                         sophia02, alex03, maya04, jordan05
                       </p>
-                      <p>• All test users have password: &quot;password123&quot;</p>
+                      <p>
+                        • All test users have password: &quot;password123&quot;
+                      </p>
                       <p>• If users already exist, they will be skipped</p>
                     </div>
 

@@ -3,7 +3,7 @@ const API_BASE_URL = "http://localhost:6767/api/users";
 export interface UpdatePersonalInfoRequest {
   personalInformation: {
     name: string;
-    email: string;
+    netid: string;
     location?: string;
     instagram?: string;
     bio?: string;
@@ -25,7 +25,7 @@ export interface UpdateBioRequest {
   };
 }
 
-export interface Match {
+export interface SemanticMatch {
   user: {
     _id: string;
     name: string;
@@ -34,37 +34,24 @@ export interface Match {
       image?: string;
       location?: string;
       bio?: string;
+      netid: string;
+      instagram?: string;
     };
   };
-  score: number;
-  theyKnowYouWant: string[];
-  theyWantYouKnow: string[];
+  transferableHobbies: string[];
+  explanation: string;
+  matchScore: number;
 }
 
-export interface MatchResponse {
+export interface SemanticMatchResponse {
   message: string;
-  matches: Match[];
+  matches: SemanticMatch[];
   totalMatches: number;
-}
-
-export interface HobbySearchResponse {
-  message: string;
-  hobby: string;
-  matches: Match[];
-  totalMatches: number;
-}
-
-export interface NormalizeHobbiesRequest {
-  hobbies: string[];
-}
-
-export interface NormalizeHobbiesResponse {
-  message: string;
-  originalHobbies: string[];
-  normalizedHobbies: Array<{
-    hobby: string;
-    related: string[];
-  }>;
+  semanticAnalysis: {
+    totalHobbiesAnalyzed: number;
+    transferableMatchesFound: number;
+    usersWithTransferableSkills: number;
+  };
 }
 
 export interface SwapRequest {
@@ -213,65 +200,64 @@ class ApiService {
     return data.imageUrl;
   }
 
-  // Get hobby matches for a user
-  async getUserMatches(userId: string): Promise<MatchResponse> {
-    console.log("🔍 Fetching matches for userId:", userId);
-    console.log("🔍 API URL:", `${API_BASE_URL}/${userId}/matches`);
-    
-    // First check if backend is healthy
-    try {
-      const healthResponse = await fetch(`${API_BASE_URL}/health`);
-      if (!healthResponse.ok) {
-        throw new Error("Backend is not healthy");
-      }
-      console.log("🔍 Backend health check passed");
-    } catch (error) {
-      console.error("🔍 Backend health check failed:", error);
-      throw new Error("Backend is not available");
-    }
-    
-    const response = await fetch(`${API_BASE_URL}/${userId}/matches`);
-    
-    console.log("🔍 Response status:", response.status);
-    console.log("🔍 Response ok:", response.ok);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("🔍 Error response:", errorText);
-      throw new Error("Failed to fetch user matches");
-    }
-    
-    return response.json();
-  }
+  // Get semantic search hobby matches
+  async getSemanticMatches(currentUser: any): Promise<SemanticMatchResponse> {
+    console.log("🌐 API: getSemanticMatches - Starting request");
+    console.log("📝 API: getSemanticMatches - Current user:", currentUser);
 
-  // Search for users who can teach a specific hobby
-  async searchHobbyTeachers(userId: string, hobby: string): Promise<HobbySearchResponse> {
-    const response = await fetch(
-      `${API_BASE_URL}/search-teachers?userId=${userId}&hobby=${encodeURIComponent(hobby)}`
-    );
-    
-    if (!response.ok) {
-      throw new Error("Failed to search hobby teachers");
-    }
-    
-    return response.json();
-  }
-
-  // Normalize hobby names using AI
-  async normalizeHobbies(data: NormalizeHobbiesRequest): Promise<NormalizeHobbiesResponse> {
-    const response = await fetch(`${API_BASE_URL}/normalize-hobbies`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    // Transform current user data to match backend expectations
+    const transformedUser = {
+      _id: currentUser.id,
+      personalInformation: {
+        name: currentUser.name,
+        image: currentUser.image,
+        location: currentUser.location,
+        bio: currentUser.bio,
+        netid: currentUser.netID,
+        instagram: currentUser.instagram,
       },
-      body: JSON.stringify(data),
-    });
+      hobbies: currentUser.hobbiesKnown || [],
+      hobbiesWantToLearn: currentUser.hobbiesWantToLearn || [],
+    };
 
-    if (!response.ok) {
-      throw new Error("Failed to normalize hobbies");
+    console.log(
+      "🔄 API: getSemanticMatches - Transformed user:",
+      transformedUser
+    );
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/semantic-matches`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ currentUser: transformedUser }),
+      });
+
+      console.log(
+        "📊 API: getSemanticMatches - Response status:",
+        response.status
+      );
+      console.log("📊 API: getSemanticMatches - Response ok:", response.ok);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(
+          "❌ API: getSemanticMatches - Error response:",
+          errorText
+        );
+        throw new Error(
+          `Failed to fetch semantic matches: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("✅ API: getSemanticMatches - Success, data:", data);
+      return data;
+    } catch (error: any) {
+      console.error("❌ API: getSemanticMatches - Error:", error);
+      throw error;
     }
-
-    return response.json();
   }
 
   // Send a swap request

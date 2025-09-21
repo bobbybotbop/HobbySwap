@@ -3,8 +3,8 @@ import { Profile } from "@/types/profile";
 
 // Example current user profile data
 const initialCurrentUser: Profile = {
-  id: "68cf6cddb67d9ed6afd18539", // Andrew's ID from backend
-  name: "Andrew",
+  id: "0",
+  name: "John Doe",
   location: "West",
   image:
     "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop",
@@ -19,7 +19,10 @@ const initialCurrentUser: Profile = {
 export const useCurrentUser = () => {
   const [currentUser, setCurrentUser] = useState<Profile>(initialCurrentUser);
 
+  console.log("🔍 useCurrentUser: Current user state:", currentUser);
+
   const updateCurrentUser = useCallback((updates: Partial<Profile>) => {
+    console.log("🔍 useCurrentUser: Updating user with:", updates);
     setCurrentUser((prev) => ({
       ...prev,
       ...updates,

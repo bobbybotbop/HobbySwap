@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Lock, Mail, Eye, EyeOff } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Profile } from "@/types/profile";
 
@@ -128,7 +128,7 @@ export default function LoginPage() {
 
       // Redirect to main page after successful login
       setTimeout(() => {
-        router.push("/?tab=For You");
+        router.push("/?tab=Search");
       }, 2000);
     } catch (error) {
       console.error("Login error:", error);

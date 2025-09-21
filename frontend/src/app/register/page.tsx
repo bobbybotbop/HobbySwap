@@ -146,7 +146,7 @@ export default function RegisterPage() {
 
         // Create user profile from registration data
         const userProfile: Profile = {
-          id: "68cf6cddb67d9ed6afd18539", // Use existing backend user ID
+          id: data._id, // Use the actual MongoDB _id from backend response
           name: formData.username.trim(),
           location: "Not specified", // Will be updated when user edits profile
           image:
@@ -166,7 +166,7 @@ export default function RegisterPage() {
 
         // Redirect to main page after successful registration
         setTimeout(() => {
-          router.push("/?tab=For You");
+          router.push("/?tab=Search");
         }, 2000);
       } else {
         setError(data.message || "Registration failed");
