@@ -12,10 +12,21 @@ A platform for Cornell University affiliated hobby enthusiasts to connect, share
 ## ✨ Features
 
 - **Skill & Hobby Profiles** - List what you know and what you want to learn
+<img width="1920" height="971" alt="image" src="https://github.com/user-attachments/assets/2c0a8394-47e6-42b3-a773-4380b6001c45" />
+
 - **For You Page** – Personalized recommendations for potential matches based on your profile
+<img width="1920" height="977" alt="image" src="https://github.com/user-attachments/assets/b74eb273-1348-4444-ba3d-6bf91d4eb299" />
+
 - **Manual Search** – Search the entire community for a specific hobby or skill
+<img width="1013" height="919" alt="image" src="https://github.com/user-attachments/assets/aec88502-997f-4188-918b-ef64606ab5b7" />
+
 - **Two-Way Matching** – Users who want to learn a skill are paired with those who can teach it — and vice versa
-- **Smart Suggestions** – LLM-powered recommendations link related hobbies and skills
+<img width="1911" height="944" alt="image" src="https://github.com/user-attachments/assets/abddb90e-e724-4e17-9914-c682f1249db7" />
+<img width="1920" height="976" alt="image" src="https://github.com/user-attachments/assets/dd95f1b4-371f-4828-be90-9d9103fc245d" />
+
+- **Inbox** - See who wants to swap with you!
+<img width="1792" height="900" alt="image" src="https://github.com/user-attachments/assets/9bf9c560-6ca8-4cd4-b4b5-e91662904e55" />
+
 - **Profile Pictures** – Optional image upload support via ImgBB API.
 
 ## 🚀 Tech Stack
